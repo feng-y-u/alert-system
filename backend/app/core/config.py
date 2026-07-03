@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     VERSION: str = "0.1.0"
     API_V1_PREFIX: str = "/api"
 
-    DATABASE_URL: str = "mysql+pymysql://root:password@localhost:3306/campus_monitor"
+    DATABASE_URL: str = "mysql+pymysql://campus_user:campus123@localhost:3306/campus_monitor"
     REDIS_URL: str = "redis://localhost:6379/0"
 
     SECRET_KEY: str = "your-secret-key-change-in-production"

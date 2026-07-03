@@ -3,7 +3,7 @@ services:
     image: mysql:8.0
     container_name: campus_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_ROOT_PASSWORD: campus123
       MYSQL_DATABASE: campus_monitor
       MYSQL_USER: campus_user
       MYSQL_PASSWORD: campus123
