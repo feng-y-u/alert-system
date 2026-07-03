@@ -7,12 +7,40 @@
 
 ---
 
-## 项目概述
+## 项目定位
 
-**校园账号异常登录监测与告警平台** — 一个安全审计与日志分析系统，用于检测校园账号的异常登录行为并发送告警。
+这是一个**校园账号异常登录监测与告警平台**，属于**监控/运维类系统**，而非面向师生的业务系统。
 
-- **项目类型**：学术项目/毕业设计
-- **版本策略**：先完成实习版（8周），再扩展为毕设完全版
+### 核心架构
+
+```
+校园系统（被监控系统）
+  │  学生/教师登录 → 产生登录日志
+  │  POST /api/logs/login → 发送日志到监测平台
+  ▼
+校园账号异常登录监测平台（本项目）
+  │  ● 接收并存储登录日志
+  │  ● 检测异常登录行为（频率异常/设备异常/位置异常）
+  │  ● 生成告警记录
+  │  ● 管理员登录查看 Dashboard、日志、告警
+  │  ● 处理告警（确认/解决）
+  ▲
+  │  管理员登录访问
+  │  http://localhost:5173 → 登录 → Dashboard
+```
+
+### 关键角色
+
+| 角色 | 说明 |
+|------|------|
+| **管理员** | 使用本监测平台的人，登录后可查看 Dashboard、登录日志、告警，并进行告警处理 |
+| **校园系统用户** | 被监控系统的使用者（学生/教师），**不是本项目的用户**，他们的登录行为是本项目的监控数据来源 |
+
+### 一句话概括
+
+> 搭建一个监测平台，接入一个测试系统后，当测试系统出现异常登录问题时，管理员可以通过本平台收到警告并进行处理。
+
+---
 
 ## 技术栈详情
 
@@ -118,8 +146,8 @@ app.include_router(users_router, prefix="/api", tags=["用户管理"])
 
 | 目录 | 用途 | 示例 |
 |------|------|------|
-| `app/api/` | API路由，每个功能一个文件 | health.py, users.py, logs.py |
-| `app/core/` | 核心配置，数据库连接 | config.py, database.py |
+| `app/api/` | API路由，每个功能一个文件 | health.py, auth.py, logs.py |
+| `app/core/` | 核心配置，数据库连接 | config.py, database.py, security.py |
 | `app/models/` | SQLAlchemy数据模型，每个表一个文件 | user.py, login_log.py |
 | `app/schemas/` | Pydantic数据模式，每个功能一个文件 | user.py, login_log.py |
 | `app/services/` | 业务逻辑，每个功能一个文件 | auth.py, anomaly.py |
@@ -134,41 +162,43 @@ app.include_router(users_router, prefix="/api", tags=["用户管理"])
 
 ## 核心功能实现
 
-### 1. 登录日志接收（实习版第3周）
-- **端点**：`POST /api/v1/logs/login`
-- **功能**：接收登录日志数据（用户名、时间戳、IP地址、设备信息、登录状态）
-- **存储**：写入MySQL的`login_logs`表
-- **模拟数据**：开发阶段使用脚本生成模拟数据
+### 1. 管理员认证（第2周）
+- **端点**：`POST /api/auth/login` — 管理员登录，返回 JWT token
+- **端点**：`POST /api/auth/register` — 管理员创建新管理员（仅已登录管理员可调用）
+- **认证方式**：JWT token，Bearer 头传递
+- **密码存储**：passlib + bcrypt 哈希
+- **角色**：仅 admin 角色，所有功能对登录用户开放
+- **管理员初始化**：通过 seed 脚本创建默认管理员
 
-### 2. 异常检测（实习版第4周）
+### 2. 登录日志接收（第3周）
+- **端点**：`POST /api/logs/login`
+- **功能**：接收校园系统发送的登录日志数据（用户名、时间戳、IP地址、设备信息、登录状态）
+- **存储**：写入MySQL的`login_logs`表
+- **模拟数据**：开发阶段使用脚本生成模拟数据，模拟真实校园系统的登录行为
+
+### 3. 异常检测（第4周）
 - **频率异常**：检测短时间（如5分钟）内多次失败登录（阈值：>3次）
 - **设备异常**：检测新设备/浏览器登录（与历史记录对比）
 - **位置异常**：检测非校园IP登录（基础版可选）
 - **工具**：使用Pandas进行数据分析
 
-### 3. 告警生成（实习版第5周）
+### 4. 告警生成（第5周）
 - **触发**：异常检测后自动生成告警记录
 - **存储**：写入`alerts`表（用户ID、异常类型、时间戳、详情）
 - **状态**：待处理、已确认、已解决
 
-### 4. 前端仪表盘（实习版第6周）
+### 5. 前端仪表盘（第6周）
 - **登录日志列表**：显示最近的登录记录，支持筛选和搜索
 - **告警列表**：显示异常登录告警，按优先级排序
 - **统计图表**：登录次数趋势、异常类型分布
 - **使用Element Plus + ECharts实现**
-
-### 5. 基础用户管理（实习版第2周）
-- **登录/注册**：用户名/密码认证
-- **角色**：普通用户、管理员
-- **权限**：基于角色的访问控制（RBAC）
-- **使用JWT token认证**
 
 ## 数据模型
 
 ### login_logs（登录日志表）
 ```sql
 - id: 主键
-- username: 用户名
+- username: 用户名（被监控系统的用户）
 - login_time: 登录时间戳
 - ip_address: IP地址
 - user_agent: 浏览器/设备信息
@@ -189,13 +219,13 @@ app.include_router(users_router, prefix="/api", tags=["用户管理"])
 - resolved_at: 解决时间（可选）
 ```
 
-### users（用户表）
+### users（管理员表）
 ```sql
 - id: 主键
-- username: 用户名
+- username: 管理员用户名
 - email: 邮箱地址
 - hashed_password: 加密密码
-- role: 角色（user/admin）
+- role: 角色（固定为 admin）
 - is_active: 是否激活
 - created_at: 创建时间
 ```
@@ -204,54 +234,55 @@ app.include_router(users_router, prefix="/api", tags=["用户管理"])
 
 ### 实习版开发计划（8周）
 
-**第1周：项目搭建与基础架构**
-- [ ] 搭建后端FastAPI项目框架
-- [ ] 配置MySQL和Redis
-- [ ] 创建基础数据库模型
-- [ ] 搭建Vue 3项目框架
-- [ ] 配置开发环境（Docker Compose）
+**第1周：项目搭建与基础架构** ✅ 已完成
+- 搭建后端FastAPI项目框架
+- 配置MySQL和Redis
+- 创建基础数据库模型
+- 搭建Vue 3项目框架
+- 配置开发环境（Docker Compose）
 
-**第2周：用户认证与权限**
-- [ ] 实现用户注册/登录API
-- [ ] 实现JWT token认证
-- [ ] 实现基于角色的访问控制（RBAC）
-- [ ] 开发前端登录/注册页面
+**第2周：管理员认证** 👈 当前
+- 实现管理员登录API（JWT token）
+- 实现管理员创建API（仅管理员可调用）
+- 编写 seed 脚本初始化默认管理员
+- 开发前端登录页面对接真实API
+- 添加路由守卫（未登录跳转登录页）
 
 **第3周：登录日志管理**
-- [ ] 实现登录日志接收API
-- [ ] 创建模拟数据生成脚本
-- [ ] 实现登录日志查询API
-- [ ] 开发前端登录日志列表页面
+- 实现登录日志接收API（POST /api/logs/login）
+- 创建模拟数据生成脚本
+- 实现登录日志查询API（GET /api/logs/login）
+- 开发前端登录日志列表页面
 
 **第4周：异常检测基础**
-- [ ] 实现频率异常检测逻辑
-- [ ] 实现设备异常检测逻辑
-- [ ] 集成Pandas进行数据分析
-- [ ] 编写异常检测单元测试
+- 实现频率异常检测逻辑
+- 实现设备异常检测逻辑
+- 集成Pandas进行数据分析
+- 编写异常检测单元测试
 
 **第5周：告警系统**
-- [ ] 实现告警生成和存储
-- [ ] 实现告警查询API
-- [ ] 集成邮件告警功能
-- [ ] 开发前端告警列表页面
+- 实现告警生成和存储
+- 实现告警查询API
+- 集成邮件告警功能
+- 开发前端告警列表页面
 
 **第6周：前端仪表盘**
-- [ ] 开发统计图表（ECharts）
-- [ ] 实现登录次数趋势图
-- [ ] 实现异常类型分布图
-- [ ] 完善筛选和搜索功能
+- 开发统计图表（ECharts）
+- 实现登录次数趋势图
+- 实现异常类型分布图
+- 完善筛选和搜索功能
 
 **第7周：功能完善**
-- [ ] 添加实时告警通知
-- [ ] 优化异常检测算法
-- [ ] 完善错误处理
-- [ ] 性能优化
+- 添加实时告警通知
+- 优化异常检测算法
+- 完善错误处理
+- 性能优化
 
 **第8周：测试与部署**
-- [ ] 编写集成测试
-- [ ] Docker容器化部署
-- [ ] 编写项目文档
-- [ ] 代码审查与优化
+- 编写集成测试
+- Docker容器化部署
+- 编写项目文档
+- 代码审查与优化
 
 ### 毕设版扩展计划（后续）
 - 地理位置异常检测（集成IP地址库）
@@ -307,11 +338,11 @@ const api = axios.create({
 })
 
 export function getLoginLogs(params) {
-  return api.get('/api/v1/login-logs/', { params })
+  return api.get('/api/login-logs/', { params })
 }
 
 export function getAlerts(params) {
-  return api.get('/api/v1/alerts/', { params })
+  return api.get('/api/alerts/', { params })
 }
 ```
 
@@ -322,7 +353,7 @@ export function getAlerts(params) {
 ```bash
 # 后端
 DATABASE_URL=mysql+pymysql://user:password@localhost:3306/campus_monitor
-REDIS_URL=redis://localhost:6379/0
+REDIS_URL=redis://localhost:6479/0
 SECRET_KEY=your-secret-key-here
 EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587
@@ -340,6 +371,7 @@ VITE_API_BASE_URL=http://localhost:8000
 3. **异步任务** — 邮件发送、定时检测等耗时操作使用Celery异步处理
 4. **错误处理** — API返回标准错误响应，前端显示友好错误提示
 5. **代码规范** — 后端使用Black格式化，前端使用Prettier格式化
+6. **本项目是监控平台** — 不要混淆"被监控系统的用户"和"本平台的管理员"两个角色
 
 ## 扩展资源
 

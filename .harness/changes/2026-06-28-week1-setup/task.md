@@ -50,36 +50,47 @@
 ## 实际验证结果
 
 ### ✅ 已完成
-1. **后端核心配置**：config.py、database.py、redis.py已创建
-2. **数据库模型**：User、LoginLog、Alert三个模型已创建
-3. **Alembic迁移**：alembic.ini和env.py已配置
-4. **Docker配置**：docker-compose.yml和Dockerfile已创建
+1. **后端核心配置**：config.py、database.py、redis.py 已创建
+2. **数据库模型**：User、LoginLog、Alert 三个模型已创建
+3. **Alembic迁移**：alembic.ini 和 env.py 已配置，初始迁移已生成（59f48e69b011）
+4. **Docker配置**：docker-compose.yml 和 Dockerfile 已创建
 5. **Vue 3前端**：项目结构、路由、API客户端、基础页面已创建
 
+### ✅ 第1周补全项
+1. **安全工具模块**：backend/app/core/security.py（passlib 密码哈希 + JWT 生成/验证）
+2. **Celery 应用**：backend/app/tasks/__init__.py（Celery 应用对象）+ email.py + detection.py（占位任务）
+3. **Pydantic Schemas**：backend/app/schemas/user.py、login_log.py、alert.py
+4. **测试基础设施**：backend/tests/conftest.py、test_health.py、test_security.py
+   - pytest 3 tests passed
+5. **前端布局组件**：frontend/src/layouts/MainLayout.vue（侧边栏 + 顶栏 + 导航菜单）
+6. **Pinia 认证 Store**：frontend/src/stores/auth.js（login/logout/token管理）
+7. **增强 Dashboard**：接入 ECharts 折线图占位 + 响应式统计卡片
+8. **整合路由**：router/index.js 使用 MainLayout 作为父路由
+9. **ESLint 配置**：frontend/.eslintrc.cjs
+10. **Black 配置**：backend/pyproject.toml
+11. **README.md**：项目根目录 README.md
+12. **依赖版本修复**：requirements.txt 新增 bcrypt==4.0.1、httpx==0.27.2
+
 ### ⚠️ 待解决
-- Docker镜像源配置问题（需修复后才能启动MySQL/Redis容器）
-- 前端依赖未安装（需运行npm install）
+- Docker 镜像源配置问题（需修复后才能启动 MySQL/Redis 容器）
+- pandas 在 Python 3.13 上编译失败（mesonpy 兼容性问题），待用 `--only-binary :all: pandas` 安装或降级 Python
 
-### 📁 新增文件清单
-- backend/app/core/config.py
-- backend/app/core/database.py
-- backend/app/core/redis.py
-- backend/app/models/user.py
-- backend/app/models/login_log.py
-- backend/app/models/alert.py
-- backend/alembic.ini
-- backend/alembic/env.py
-- backend/Dockerfile
-- backend/.env
-- docker-compose.yml
-- frontend/package.json
-- frontend/vite.config.js
-- frontend/index.html
-- frontend/src/main.js
-- frontend/src/App.vue
-- frontend/src/router/index.js
-- frontend/src/api/index.js
-- frontend/src/views/Dashboard.vue
-- frontend/src/views/Login.vue
-- frontend/.env
-
+### 📁 新增/修改文件清单
+- backend/app/core/security.py (新)
+- backend/app/tasks/__init__.py (改写)
+- backend/app/tasks/email.py (新)
+- backend/app/tasks/detection.py (新)
+- backend/app/schemas/user.py (新)
+- backend/app/schemas/login_log.py (新)
+- backend/app/schemas/alert.py (新)
+- backend/tests/conftest.py (新)
+- backend/tests/test_health.py (新)
+- backend/tests/test_security.py (新)
+- backend/pyproject.toml (新)
+- backend/requirements.txt (修改)
+- frontend/src/layouts/MainLayout.vue (新)
+- frontend/src/stores/auth.js (新)
+- frontend/src/router/index.js (修改)
+- frontend/src/views/Dashboard.vue (修改)
+- frontend/.eslintrc.cjs (新)
+- README.md (新)
