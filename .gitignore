@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.egg
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Env & secrets
+.env
+*.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker data
+mysql_data/
+redis_data/
+
+# Planning (local scratch)
+.planning/
+
+# Misc docs (not code)
+杂项/
