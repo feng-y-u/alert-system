@@ -1,0 +1,147 @@
+<h2>📊 Dashboard 页面布局</h2>
+<p class="subtitle">应用设计系统后的主面板设计</p>
+
+<div class="mockup">
+  <div class="mockup-header">Dashboard · 概览</div>
+  <div class="mockup-body" style="background:#f8f9fa;padding:24px;">
+    <!-- Page Title -->
+    <div style="margin-bottom:24px;">
+      <div style="font-size:20px;font-weight:600;color:#111827;">仪表盘</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px;">实时掌握校园登录状态</div>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+        <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">今日登录</div>
+        <div style="font-size:28px;font-weight:700;color:#111827;">1,284</div>
+        <div style="font-size:13px;color:#10b981;margin-top:8px;">↑ 12.5%</div>
+      </div>
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+        <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">异常告警</div>
+        <div style="font-size:28px;font-weight:700;color:#ef4444;">23</div>
+        <div style="font-size:13px;color:#ef4444;margin-top:8px;">3 个待处理</div>
+      </div>
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+        <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">活跃用户</div>
+        <div style="font-size:28px;font-weight:700;color:#111827;">856</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:8px;">今日在线</div>
+      </div>
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+        <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">监控系统</div>
+        <div style="font-size:28px;font-weight:700;color:#111827;">12</div>
+        <div style="font-size:13px;color:#10b981;margin-top:8px;">全部在线</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;">
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:16px;font-weight:500;color:#111827;">登录趋势</div>
+          <div style="display:flex;gap:12px;">
+            <span style="font-size:13px;color:#6b7280;cursor:pointer;">7天</span>
+            <span style="font-size:13px;color:#2563eb;font-weight:500;cursor:pointer;">30天</span>
+          </div>
+        </div>
+        <!-- Fake chart area -->
+        <div style="height:200px;background:linear-gradient(180deg, rgba(37,99,235,0.08) 0%, transparent 100%);border-radius:6px;position:relative;overflow:hidden;">
+          <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="none">
+            <polyline points="0,160 57,140 114,100 171,120 228,60 285,80 342,50 400,70"
+              fill="none" stroke="#2563eb" stroke-width="2"/>
+            <polygon points="0,160 57,140 114,100 171,120 228,60 285,80 342,50 400,70 400,200 0,200"
+              fill="url(#areaGrad)" opacity="0.15"/>
+            <defs>
+              <linearGradient id="areaGrad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#2563eb"/>
+                <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+        <div style="font-size:16px;font-weight:500;color:#111827;margin-bottom:16px;">系统状态</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin-bottom:4px;">
+              <span>教务系统</span><span style="color:#10b981;">正常</span>
+            </div>
+            <div style="height:4px;background:#f3f4f6;border-radius:2px;">
+              <div style="width:98%;height:4px;background:#10b981;border-radius:2px;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin-bottom:4px;">
+              <span>图书馆</span><span style="color:#10b981;">正常</span>
+            </div>
+            <div style="height:4px;background:#f3f4f6;border-radius:2px;">
+              <div style="width:85%;height:4px;background:#10b981;border-radius:2px;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin-bottom:4px;">
+              <span>财务系统</span><span style="color:#f59e0b;">高负载</span>
+            </div>
+            <div style="height:4px;background:#f3f4f6;border-radius:2px;">
+              <div style="width:72%;height:4px;background:#f59e0b;border-radius:2px;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin-bottom:4px;">
+              <span>邮件服务</span><span style="color:#10b981;">正常</span>
+            </div>
+            <div style="height:4px;background:#f3f4f6;border-radius:2px;">
+              <div style="width:95%;height:4px;background:#10b981;border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Alerts Table -->
+    <div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
+      <div style="font-size:16px;font-weight:500;color:#111827;margin-bottom:16px;">最近告警</div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <th style="text-align:left;padding:10px 12px;font-weight:500;color:#6b7280;font-size:13px;">时间</th>
+            <th style="text-align:left;padding:10px 12px;font-weight:500;color:#6b7280;font-size:13px;">用户</th>
+            <th style="text-align:left;padding:10px 12px;font-weight:500;color:#6b7280;font-size:13px;">类型</th>
+            <th style="text-align:left;padding:10px 12px;font-weight:500;color:#6b7280;font-size:13px;">状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:12px;color:#111827;">2026-07-03 14:23</td>
+            <td style="padding:12px;color:#111827;">zhangsan</td>
+            <td style="padding:12px;"><span style="padding:2px 10px;border-radius:999px;font-size:12px;background:#fef3c7;color:#92400e;">异地登录</span></td>
+            <td style="padding:12px;"><span style="padding:2px 10px;border-radius:999px;font-size:12px;background:#fee2e2;color:#991b1b;">未处理</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:12px;color:#111827;">2026-07-03 13:47</td>
+            <td style="padding:12px;color:#111827;">lisi</td>
+            <td style="padding:12px;"><span style="padding:2px 10px;border-radius:999px;font-size:12px;background:#fee2e2;color:#991b1b;">暴力破解</span></td>
+            <td style="padding:12px;"><span style="padding:2px 10px;border-radius:999px;font-size:12px;background:#e0e7ff;color:#3730a3;">处理中</span></td>
+          </tr>
+          <tr>
+            <td style="padding:12px;color:#111827;">2026-07-03 11:02</td>
+            <td style="padding:12px;color:#111827;">wangwu</td>
+            <td style="padding:12px;"><span style="padding:2px 10px;border-radius:999px;font-size:12px;background:#fef3c7;color:#92400e;">非活跃时段</span></td>
+            <td style="padding:12px;"><span style="padding:2px 10px;border-radius:999px;font-size:12px;background:#dcfce7;color:#166534;">已处理</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>设计要点</h3>
+  <ul style="line-height:2;">
+    <li><strong>4 列统计卡片</strong> — 白卡 + 极细边框，数字醒目，趋势用小字+颜色表示</li>
+    <li><strong>左图表右状态</strong> — 2:1 比例，左侧折线图 + 面积渐变，右侧系统健康度进度条</li>
+    <li><strong>最近告警表格</strong> — 无边框表格，仅行底线，状态标签颜色统一</li>
+    <li>所有文字层级靠 <strong>字重和颜色</strong> 区分：深灰 #111827 标题 → 中灰 #6b7280 辅助 → 浅灰 #9ca3af 占位</li>
+  </ul>
+</div>

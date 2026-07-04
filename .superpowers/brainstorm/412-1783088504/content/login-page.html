@@ -1,0 +1,94 @@
+<h2>🔐 登录页设计</h2>
+<p class="subtitle">管理员登录 · 极简白风格</p>
+
+<div class="section">
+  <h3>页面布局</h3>
+  <p>居中卡片式，左侧可放置登录表单，右侧留白或装饰元素（可选）。</p>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Login Page</div>
+  <div class="mockup-body" style="height:520px;background:#f8f9fa;display:flex;align-items:center;justify-content:center;">
+    <!-- Login Card -->
+    <div style="width:400px;background:white;border:1px solid #e5e7eb;border-radius:12px;padding:40px 36px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+
+      <!-- Logo / Title -->
+      <div style="text-align:center;margin-bottom:32px;">
+        <div style="width:48px;height:48px;background:#1a1a2e;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <span style="color:white;font-size:20px;font-weight:700;">S</span>
+        </div>
+        <div style="font-size:20px;font-weight:600;color:#111827;">管理员登录</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px;">校园账号异常登录监测平台</div>
+      </div>
+
+      <!-- Login Form -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div>
+          <label style="font-size:13px;color:#374151;font-weight:500;display:block;margin-bottom:6px;">用户名</label>
+          <div style="height:40px;border:1px solid #d1d5db;border-radius:8px;display:flex;align-items:center;padding:0 12px;">
+            <span style="color:#9ca3af;margin-right:8px;font-size:14px;">👤</span>
+            <input placeholder="请输入管理员用户名" style="border:none;outline:none;font-size:14px;color:#111827;flex:1;background:transparent;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;color:#374151;font-weight:500;display:block;margin-bottom:6px;">密码</label>
+          <div style="height:40px;border:1px solid #d1d5db;border-radius:8px;display:flex;align-items:center;padding:0 12px;">
+            <span style="color:#9ca3af;margin-right:8px;font-size:14px;">🔒</span>
+            <input type="password" placeholder="请输入密码" style="border:none;outline:none;font-size:14px;color:#111827;flex:1;background:transparent;">
+          </div>
+        </div>
+        <button style="height:40px;border-radius:8px;font-size:14px;font-weight:400;background:#2563eb;color:white;border:none;cursor:pointer;margin-top:4px;">
+          登 录
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align:center;margin-top:24px;">
+        <span style="font-size:12px;color:#9ca3af;">仅限管理员登录 · 版权所有 © 2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>状态说明</h3>
+
+  <div class="label" style="margin-top:12px;">表单验证状态</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+    <!-- Empty state -->
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f8f9fa;">
+      <div style="font-size:13px;font-weight:500;color:#111827;margin-bottom:8px;">空字段校验</div>
+      <div style="height:36px;border:1px solid #ef4444;border-radius:8px;display:flex;align-items:center;padding:0 12px;background:white;">
+        <input placeholder="请输入用户名" style="border:none;outline:none;font-size:14px;flex:1;background:transparent;color:#111827;">
+      </div>
+      <div style="font-size:12px;color:#ef4444;margin-top:4px;">请输入用户名</div>
+    </div>
+
+    <!-- Loading state -->
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f8f9fa;">
+      <div style="font-size:13px;font-weight:500;color:#111827;margin-bottom:8px;">登录中</div>
+      <div style="height:36px;border:1px solid #d1d5db;border-radius:8px;display:flex;align-items:center;padding:0 12px;background:white;gap:8px;">
+        <div style="width:14px;height:14px;border:2px solid #d1d5db;border-top-color:#2563eb;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <span style="font-size:14px;color:#6b7280;">正在验证...</span>
+      </div>
+      <button style="height:36px;border-radius:8px;font-size:14px;font-weight:400;background:#93c5fd;color:white;border:none;width:100%;margin-top:8px;cursor:not-allowed;">登 录</button>
+    </div>
+  </div>
+
+  <div class="label" style="margin-top:16px;">错误状态</div>
+  <div style="border:1px solid #fca5a5;border-radius:8px;padding:12px;background:#fef2f2;margin-top:8px;display:flex;align-items:center;gap:8px;">
+    <span style="color:#ef4444;font-size:14px;">⚠️</span>
+    <span style="font-size:13px;color:#991b1b;">用户名或密码错误，请重新输入</span>
+  </div>
+</div>
+
+<div class="section">
+  <h3>设计要点</h3>
+  <ul style="line-height:2;">
+    <li><strong>白卡 + 极细边框 + 微阴影</strong> — 与 Dashboard 风格统一</li>
+    <li><strong>紧凑表单</strong> — label + 图标前缀输入框 + 统一样式按钮</li>
+    <li><strong>品牌元素</strong> — 深蓝方形 LOGO 区域，简约「S」字母</li>
+    <li><strong>完整覆盖状态</strong> — 空字段校验（红框+红字）、加载中（旋转图标+禁用按钮）、错误提示（红底黄框）</li>
+    <li>登录按钮与正文统一 <strong>14px · 400 weight</strong></li>
+  </ul>
+</div>

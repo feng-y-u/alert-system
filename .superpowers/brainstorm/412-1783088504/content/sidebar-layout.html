@@ -1,0 +1,80 @@
+<h2>🧭 侧边栏导航设计</h2>
+<p class="subtitle">深色侧栏 + 白色顶栏 · 应用设计系统</p>
+
+<div class="mockup">
+  <div class="mockup-header">MainLayout · 导航布局</div>
+  <div class="mockup-body" style="background:#f8f9fa;padding:0;display:flex;height:460px;">
+
+    <!-- Sidebar -->
+    <div style="width:220px;background:#1a1a2e;display:flex;flex-direction:column;flex-shrink:0;">
+      <!-- Logo area -->
+      <div style="height:56px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="width:28px;height:28px;background:#2563eb;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+          <span style="color:white;font-size:13px;font-weight:700;">S</span>
+        </div>
+        <span style="color:white;font-size:15px;font-weight:500;">校园监测平台</span>
+      </div>
+
+      <!-- Nav items -->
+      <div style="flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px;">
+        <div style="padding:10px 12px;border-radius:8px;background:rgba(37,99,235,0.15);display:flex;align-items:center;gap:10px;">
+          <span style="color:#60a5fa;font-size:14px;">📊</span>
+          <span style="color:white;font-size:14px;font-weight:400;">仪表盘</span>
+        </div>
+        <div style="padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px;">
+          <span style="color:rgba(255,255,255,0.5);font-size:14px;">📋</span>
+          <span style="color:rgba(255,255,255,0.7);font-size:14px;font-weight:400;">登录日志</span>
+        </div>
+        <div style="padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px;">
+          <span style="color:rgba(255,255,255,0.5);font-size:14px;">🔔</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex:1;">
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;font-weight:400;">告警列表</span>
+            <span style="background:#ef4444;color:white;font-size:11px;padding:1px 6px;border-radius:999px;">23</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar footer -->
+      <div style="padding:12px 8px;border-top:1px solid rgba(255,255,255,0.06);">
+        <div style="padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px;">
+          <span style="color:rgba(255,255,255,0.5);font-size:14px;">⚙️</span>
+          <span style="color:rgba(255,255,255,0.5);font-size:14px;font-weight:400;">系统设置</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main area -->
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <!-- Top header -->
+      <div style="height:56px;background:white;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 24px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:14px;color:#9ca3af;cursor:pointer;">☰</span>
+          <span style="font-size:14px;color:#6b7280;" id="breadcrumb">仪表盘</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="font-size:13px;color:#6b7280;">admin</span>
+          <div style="width:32px;height:32px;background:#f3f4f6;border-radius:50%;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:13px;color:#374151;">👤</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content placeholder -->
+      <div style="flex:1;padding:24px;">
+        <div style="font-size:20px;font-weight:600;color:#111827;">仪表盘</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px;">实时掌握校园账号登录状态</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>设计要点</h3>
+  <ul style="line-height:2;">
+    <li><strong>深蓝侧栏 #1a1a2e</strong> — 活跃项蓝色高亮背景，非活跃项半透明白色文字</li>
+    <li><strong>白色顶栏</strong> — 左侧面包屑 + 右侧用户头像/名称，底部极细边框分隔</li>
+    <li><strong>告警角标</strong> — 小红点 + 数字，显示待处理告警数量</li>
+    <li><strong>折叠态</strong> — 收缩到 64px，仅显示图标，鼠标悬停展开</li>
+    <li>导航项 <strong>14px · 400 weight</strong>，与正文统一</li>
+  </ul>
+</div>
