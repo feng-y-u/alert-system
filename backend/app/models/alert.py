@@ -9,10 +9,11 @@ class Alert(Base):
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True, nullable=False)
+    username = Column(String(50), index=True, nullable=False)
     alert_type = Column(String(50), nullable=False)
     alert_message = Column(String(500), nullable=False)
     severity = Column(String(20), nullable=False)
     status = Column(String(20), default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at = Column(DateTime)

@@ -16,3 +16,4 @@ class LoginLog(Base):
     login_status = Column(String(20), nullable=False)
     location = Column(String(100))
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

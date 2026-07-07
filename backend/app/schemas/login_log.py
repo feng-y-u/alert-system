@@ -26,6 +26,7 @@ class LoginLogResponse(BaseModel):
 
 
 class LoginLogQuery(BaseModel):
+    """登录日志查询参数，配合 FastAPI Depends() 使用以自动解析为 URL query 参数"""
     username: str | None = None
     login_status: str | None = None
     start_time: datetime | None = None

@@ -50,7 +50,12 @@ const handleLogin = async () => {
     await authStore.login(form.username, form.password)
     router.push('/')
   } catch (err) {
-    error.value = err.response?.data?.detail || '登录失败，请检查用户名和密码'
+    const detail = err.response?.data?.detail
+    if (Array.isArray(detail)) {
+      error.value = detail.map(d => d.msg).join('；')
+    } else {
+      error.value = detail || '登录失败，请检查用户名和密码'
+    }
   } finally {
     loading.value = false
   }

@@ -14,11 +14,11 @@
           <el-icon><Monitor /></el-icon>
           <span>仪表盘</span>
         </el-menu-item>
-        <el-menu-item index="/login-logs">
+        <el-menu-item index="/login-logs" disabled>
           <el-icon><Document /></el-icon>
           <span>登录日志</span>
         </el-menu-item>
-        <el-menu-item index="/alerts">
+        <el-menu-item index="/alerts" disabled>
           <el-icon><WarningFilled /></el-icon>
           <span>告警列表</span>
         </el-menu-item>
@@ -52,21 +52,22 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import { ArrowDown, Document, Expand, Fold, Monitor, WarningFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const isCollapse = ref(false)
 const toggleCollapse = () => (isCollapse.value = !isCollapse.value)
 
 const currentRoute = computed(() => route.path)
-const username = computed(() => localStorage.getItem('username') || '用户')
+const username = computed(() => authStore.username || '用户')
 
 const handleCommand = (cmd) => {
   if (cmd === 'logout') {
-    localStorage.removeItem('token')
-    localStorage.removeItem('username')
+    authStore.logout()
     router.push('/login')
   }
 }
