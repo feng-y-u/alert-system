@@ -197,6 +197,7 @@ onMounted(async () => {
           smooth: true,
           symbol: 'circle',
           symbolSize: 8,
+          animation: false,
           lineStyle: {
             width: 3,
             color: '#111827',
