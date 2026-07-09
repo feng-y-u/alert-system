@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     ALGORITHM: str = "HS256"
+    API_KEY: str = "dev-api-key-change-in-production"
 
     EMAIL_HOST: str = "smtp.example.com"
     EMAIL_PORT: int = 587

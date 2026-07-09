@@ -1,7 +1,8 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
@@ -56,3 +57,13 @@ def get_current_active_user(
             detail="用户已被禁用",
         )
     return current_user
+
+
+def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")) -> str:
+    """验证 API Key"""
+    if x_api_key != settings.API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API Key"
+        )
+    return x_api_key
