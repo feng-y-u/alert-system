@@ -148,6 +148,9 @@ onMounted(async () => {
   if (chartRef.value) {
     chartInstance = echarts.init(chartRef.value)
     chartInstance.setOption({
+      animation: true,
+      animationDuration: 1500,
+      animationEasing: 'cubicOut',
       tooltip: {
         trigger: 'axis',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -168,6 +171,9 @@ onMounted(async () => {
       xAxis: {
         type: 'category',
         data: trend.value.map(t => t.date),
+        animation: true,
+        animationDuration: 600,
+        animationDelay: 0,
         axisLine: {
           lineStyle: { color: '#e5e7eb' },
         },
@@ -175,10 +181,16 @@ onMounted(async () => {
         axisLabel: {
           color: '#6b7280',
           fontSize: 12,
+          animation: true,
+          animationDuration: 600,
+          animationDelay: 300,
         },
       },
       yAxis: {
         type: 'value',
+        animation: true,
+        animationDuration: 600,
+        animationDelay: 0,
         splitLine: {
           lineStyle: {
             color: '#f3f4f6',
@@ -188,6 +200,9 @@ onMounted(async () => {
         axisLabel: {
           color: '#6b7280',
           fontSize: 12,
+          animation: true,
+          animationDuration: 600,
+          animationDelay: 300,
         },
       },
       series: [
@@ -197,10 +212,16 @@ onMounted(async () => {
           smooth: true,
           symbol: 'circle',
           symbolSize: 8,
-          animation: false,
+          animation: true,
+          animationDuration: 1500,
+          animationEasing: 'cubicOut',
+          animationDelay: (idx) => idx * 50,
           lineStyle: {
             width: 3,
             color: '#111827',
+            shadowColor: 'rgba(17, 24, 39, 0.3)',
+            shadowBlur: 10,
+            shadowOffsetY: 5,
           },
           itemStyle: {
             color: '#111827',
@@ -208,6 +229,7 @@ onMounted(async () => {
             borderColor: '#fff',
           },
           areaStyle: {
+            opacity: 0.8,
             color: {
               type: 'linear',
               x: 0,
@@ -215,7 +237,7 @@ onMounted(async () => {
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(17, 24, 39, 0.1)' },
+                { offset: 0, color: 'rgba(17, 24, 39, 0.2)' },
                 { offset: 1, color: 'rgba(17, 24, 39, 0)' },
               ],
             },
