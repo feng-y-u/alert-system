@@ -132,9 +132,12 @@ const refreshData = async () => {
     chartInstance = null
 
     if (chartRef.value) {
+      // 先隐藏容器，让图表在不可见状态渲染
+      chartRef.value.style.opacity = '0'
+
       chartInstance = echarts.init(chartRef.value)
       chartInstance.setOption({
-        animationDuration: 2000,
+        animationDuration: 2500,
         animationEasing: 'cubicOut',
         tooltip: {
           trigger: 'axis',
@@ -168,8 +171,9 @@ const refreshData = async () => {
           smooth: true,
           symbol: 'circle',
           symbolSize: 8,
-          animationDuration: 2000,
+          animationDuration: 2500,
           animationEasing: 'cubicOut',
+          animationDelay: 400,
           lineStyle: {
             width: 3,
             color: '#111827',
@@ -195,6 +199,11 @@ const refreshData = async () => {
           },
         }],
       })
+
+      // 图表渲染后淡入（轴标签 + 背景渐显）
+      requestAnimationFrame(() => {
+        chartRef.value.style.opacity = '1'
+      })
     }
   } catch (err) {
     console.error('Failed to load stats:', err)
@@ -203,9 +212,8 @@ const refreshData = async () => {
 
 onMounted(async () => {
   await refreshData()
-  // refreshData 已经完成了图表初始化和动画
 
-  // 监听 timeRange 变化，自动刷新数据
+  // 监听 timeRange 变化
   watch(timeRange, () => {
     refreshData()
   })
@@ -348,6 +356,7 @@ onUnmounted(() => {
 
 .chart-container {
   height: 320px;
+  transition: opacity 0.8s ease;
 }
 
 /* === 快捷操作 === */
