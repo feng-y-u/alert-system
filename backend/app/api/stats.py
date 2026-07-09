@@ -14,6 +14,7 @@ router = APIRouter()
 
 @router.get("/stats")
 def get_stats(
+    days: int = 7,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -36,9 +37,9 @@ def get_stats(
         LoginLog.login_time >= today_start
     ).distinct().count()
 
-    # 近 7 天每日登录趋势
+    # 登录趋势（支持近7天或近30天）
     trend = []
-    for i in range(6, -1, -1):
+    for i in range(days - 1, -1, -1):
         day = now - timedelta(days=i)
         day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)

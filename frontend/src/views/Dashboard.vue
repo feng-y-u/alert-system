@@ -120,7 +120,8 @@ const formatNumber = (num) => {
 
 const refreshData = async () => {
   try {
-    const res = await api.get('/api/stats')
+    const days = timeRange.value === 'week' ? 7 : 30
+    const res = await api.get('/api/stats', { params: { days } })
     stats.todayLogins = res.todayLogins
     stats.pendingAlerts = res.pendingAlerts
     stats.activeUsers = res.activeUsers
@@ -222,6 +223,11 @@ onMounted(async () => {
       ],
     })
   }
+
+  // 监听 timeRange 变化，自动刷新数据
+  watch(timeRange, () => {
+    refreshData()
+  })
 })
 
 onUnmounted(() => {
