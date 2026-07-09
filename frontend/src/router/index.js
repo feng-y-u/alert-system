@@ -19,6 +19,11 @@ const routes = [
         component: () => import('../views/LoginLogs.vue'),
       },
       {
+        path: '/alerts',
+        name: 'Alerts',
+        component: () => import('../views/Alerts.vue'),
+      },
+      {
         path: '',
         name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
