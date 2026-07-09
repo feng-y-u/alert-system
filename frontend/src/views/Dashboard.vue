@@ -131,9 +131,14 @@ const refreshData = async () => {
       chartInstance.setOption({
         xAxis: {
           data: trend.value.map(t => t.date),
+          animation: true,
+          animationDuration: 600,
         },
         series: [{
           data: trend.value.map(t => t.count),
+          animation: true,
+          animationDuration: 1500,
+          animationEasing: 'cubicOut',
         }],
       })
     }
@@ -215,7 +220,7 @@ onMounted(async () => {
           animation: true,
           animationDuration: 1500,
           animationEasing: 'cubicOut',
-          animationDelay: (idx) => idx * 50,
+          animationDelay: 200,
           lineStyle: {
             width: 3,
             color: '#111827',
