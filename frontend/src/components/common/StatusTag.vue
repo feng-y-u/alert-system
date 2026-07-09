@@ -1,7 +1,6 @@
 <template>
   <span class="status-tag" :class="statusClass">
-    <span class="status-bar" :class="statusClass"></span>
-    <span class="status-text">{{ label }}</span>
+    {{ label }}
   </span>
 </template>
 
@@ -28,40 +27,16 @@ const label = computed(() => ({
 
 <style scoped>
 .status-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  background: transparent;
+  white-space: nowrap;
 }
 
-.status-bar {
-  width: 3px;
-  height: 14px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.status-text {
-  line-height: 20px;
-}
-
-.status-success .status-bar {
-  background-color: #10b981;
-}
-
-.status-success .status-text {
+.status-success {
   color: #10b981;
 }
 
-.status-failure .status-bar {
-  background-color: #ef4444;
-}
-
-.status-failure .status-text {
+.status-failure {
   color: #ef4444;
 }
 </style>
