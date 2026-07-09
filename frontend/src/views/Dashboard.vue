@@ -128,17 +128,17 @@ const refreshData = async () => {
     trend.value = res.loginTrend || []
 
     if (chartInstance) {
-      // 使用 notMerge: true 强制重新渲染，确保动画效果
+      // 使用 animation 配置启用动画，而不是 notMerge
       chartInstance.setOption({
         xAxis: {
           data: trend.value.map(t => t.date),
         },
         series: [{
           data: trend.value.map(t => t.count),
+          animation: true,
+          animationDuration: 1000,
+          animationEasing: 'cubicOut',
         }],
-      }, {
-        notMerge: true,
-        lazyUpdate: false,
       })
     }
   } catch (err) {
