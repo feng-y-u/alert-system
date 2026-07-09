@@ -14,7 +14,7 @@
           v-for="item in menuItems"
           :key="item.path"
           :to="item.path"
-          :class="['nav-item', { active: currentRoute === item.path, disabled: item.disabled }]"
+          :class="['nav-item', { disabled: item.disabled }]"
         >
           <el-icon :size="20">
             <component :is="item.icon" />
@@ -88,7 +88,6 @@ const authStore = useAuthStore()
 const isCollapse = ref(false)
 const toggleCollapse = () => (isCollapse.value = !isCollapse.value)
 
-const currentRoute = computed(() => route.path)
 const username = computed(() => authStore.username || '用户')
 
 const pageTitle = computed(() => {
@@ -102,7 +101,7 @@ const pageTitle = computed(() => {
 
 const menuItems = [
   { path: '/', label: '仪表盘', icon: Monitor, disabled: false },
-  { path: '/login-logs', label: '登录日志', icon: Document, disabled: true },
+  { path: '/login-logs', label: '登录日志', icon: Document, disabled: false },
   { path: '/alerts', label: '告警列表', icon: WarningFilled, disabled: true },
 ]
 
@@ -198,7 +197,8 @@ const handleCommand = (cmd) => {
   color: var(--color-text-primary);
 }
 
-.nav-item.active {
+.nav-item.active,
+.nav-item.router-link-exact-active {
   background-color: var(--color-border-light);
   color: var(--color-primary);
   font-weight: 600;
