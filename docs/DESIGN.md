@@ -2,7 +2,8 @@
 
 **校园账号异常登录监测与告警平台** — 详细设计文档
 
-> 核心框架信息（技术栈、项目结构、命令等）请参考 [CLAUDE.md](../CLAUDE.md)
+> 核心框架信息（技术栈、项目结构、命令等）请参考 [CLAUDE.md](../CLAUDE.md)  
+> UI 设计规范请参考 [UI.md](UI.md)
 
 ---
 
@@ -63,23 +64,26 @@ severity(low/medium/high), status(pending/acknowledged/resolved), created_at, up
 
 ```
 backend/
-├── app/api/           # API 路由（每个功能一个文件）
-├── app/core/          # 配置 + 数据库 + 安全 + 依赖注入
-├── app/models/        # SQLAlchemy ORM 模型
-├── app/schemas/       # Pydantic 请求/响应模式
-├── app/services/      # 业务逻辑（当前为空）
-├── app/tasks/         # Celery 异步任务
+├── app/
+│   ├── api/           # API 路由（每个功能一个文件）
+│   ├── core/          # 配置 + 数据库 + 安全 + 依赖注入
+│   ├── models/        # SQLAlchemy ORM 模型
+│   ├── schemas/       # Pydantic 请求/响应模式
+│   ├── services/      # 业务逻辑
+│   └── tasks/         # Celery 异步任务
 ├── alembic/           # 数据库迁移
 ├── tests/             # pytest 测试
 ├── scripts/           # 工具脚本（如 seed.py）
 └── requirements.txt
 frontend/
-├── src/api/           # Axios 客户端
-├── src/layouts/       # 布局组件
-├── src/router/        # 路由配置（含 beforeEach 守卫）
-├── src/stores/        # Pinia 状态管理
-├── src/views/         # 页面视图
-└── src/components/    # Vue 组件
+├── src/
+│   ├── api/           # Axios 客户端
+│   ├── layouts/       # 布局组件
+│   ├── router/        # 路由配置
+│   ├── stores/        # Pinia 状态管理
+│   ├── views/         # 页面视图
+│   └── components/    # Vue 组件
+└── ...
 ```
 
 

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.health import router as health_router
 from app.api.auth import router as auth_router
+from app.api.stats import router as stats_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -23,3 +24,4 @@ app.add_middleware(
 
 app.include_router(health_router, prefix=settings.API_V1_PREFIX, tags=["健康检查"])
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX, tags=["认证"])
+app.include_router(stats_router, prefix=settings.API_V1_PREFIX, tags=["统计"])
