@@ -7,12 +7,11 @@
       </template>
     </el-table-column>
     <el-table-column prop="ip_address" label="IP地址" min-width="140" />
-    <el-table-column prop="login_status" label="状态" width="100">
+    <el-table-column prop="login_status" label="状态" width="80" align="center">
       <template #default="{ row }">
         <StatusTag :status="row.login_status" />
       </template>
     </el-table-column>
-    <el-table-column prop="location" label="位置" min-width="120" />
   </el-table>
 </template>
 

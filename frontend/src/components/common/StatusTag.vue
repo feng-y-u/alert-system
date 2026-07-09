@@ -1,5 +1,6 @@
 <template>
   <span class="status-tag" :class="statusClass">
+    <span class="status-dot" :class="statusClass"></span>
     {{ label }}
   </span>
 </template>
@@ -29,10 +30,17 @@ const label = computed(() => ({
 .status-tag {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
 .status-success {
@@ -40,8 +48,16 @@ const label = computed(() => ({
   color: #10b981;
 }
 
+.status-success .status-dot {
+  background-color: #10b981;
+}
+
 .status-failure {
   background-color: #fee2e2;
   color: #ef4444;
+}
+
+.status-failure .status-dot {
+  background-color: #ef4444;
 }
 </style>
