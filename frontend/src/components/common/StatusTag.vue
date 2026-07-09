@@ -1,7 +1,7 @@
 <template>
   <span class="status-tag" :class="statusClass">
-    <span class="status-dot" :class="statusClass"></span>
-    {{ label }}
+    <span class="status-bar" :class="statusClass"></span>
+    <span class="status-text">{{ label }}</span>
   </span>
 </template>
 
@@ -31,33 +31,38 @@ const label = computed(() => ({
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: 2px 10px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
 }
 
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.status-bar {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
-.status-success {
-  background-color: #d1fae5;
-  color: #10b981;
+.status-text {
+  line-height: 20px;
 }
 
-.status-success .status-dot {
+.status-success .status-bar {
   background-color: #10b981;
 }
 
-.status-failure {
-  background-color: #fee2e2;
-  color: #ef4444;
+.status-success .status-text {
+  color: #10b981;
 }
 
-.status-failure .status-dot {
+.status-failure .status-bar {
   background-color: #ef4444;
+}
+
+.status-failure .status-text {
+  color: #ef4444;
 }
 </style>
