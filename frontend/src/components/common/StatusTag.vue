@@ -30,13 +30,12 @@ const label = computed(() => ({
 .status-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 10px;
+  gap: 4px;
+  padding: 2px 4px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: transparent;
 }
 
 .status-bar {
