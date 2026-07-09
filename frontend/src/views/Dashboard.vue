@@ -127,100 +127,49 @@ const refreshData = async () => {
     stats.activeUsers = res.activeUsers
     trend.value = res.loginTrend || []
 
-    if (chartInstance) {
+    // 销毁旧图表，重建以触发动画
+    chartInstance?.dispose()
+    chartInstance = null
+
+    if (chartRef.value) {
+      chartInstance = echarts.init(chartRef.value)
       chartInstance.setOption({
+        animationDuration: 2000,
+        animationEasing: 'cubicOut',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#e5e7eb',
+          borderWidth: 1,
+          textStyle: { color: '#111827' },
+          padding: [12, 16],
+        },
+        grid: {
+          left: 0, right: 0, top: 20, bottom: 0,
+          containLabel: true,
+        },
         xAxis: {
+          type: 'category',
           data: trend.value.map(t => t.date),
-          animation: true,
-          animationDuration: 600,
+          axisLine: { lineStyle: { color: '#e5e7eb' } },
+          axisTick: { show: false },
+          axisLabel: { color: '#6b7280', fontSize: 12 },
+        },
+        yAxis: {
+          type: 'value',
+          splitLine: {
+            lineStyle: { color: '#f3f4f6', type: 'dashed' },
+          },
+          axisLabel: { color: '#6b7280', fontSize: 12 },
         },
         series: [{
-          data: trend.value.map(t => t.count),
-          animation: true,
-          animationDuration: 1500,
-          animationEasing: 'cubicOut',
-        }],
-      })
-    }
-  } catch (err) {
-    console.error('Failed to load stats:', err)
-  }
-}
-
-onMounted(async () => {
-  await refreshData()
-
-  if (chartRef.value) {
-    chartInstance = echarts.init(chartRef.value)
-    chartInstance.setOption({
-      animation: true,
-      animationDuration: 1500,
-      animationEasing: 'cubicOut',
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#e5e7eb',
-        borderWidth: 1,
-        textStyle: {
-          color: '#111827',
-        },
-        padding: [12, 16],
-      },
-      grid: {
-        left: 0,
-        right: 0,
-        top: 20,
-        bottom: 0,
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'category',
-        data: trend.value.map(t => t.date),
-        animation: true,
-        animationDuration: 600,
-        animationDelay: 0,
-        axisLine: {
-          lineStyle: { color: '#e5e7eb' },
-        },
-        axisTick: { show: false },
-        axisLabel: {
-          color: '#6b7280',
-          fontSize: 12,
-          animation: true,
-          animationDuration: 600,
-          animationDelay: 300,
-        },
-      },
-      yAxis: {
-        type: 'value',
-        animation: true,
-        animationDuration: 600,
-        animationDelay: 0,
-        splitLine: {
-          lineStyle: {
-            color: '#f3f4f6',
-            type: 'dashed',
-          },
-        },
-        axisLabel: {
-          color: '#6b7280',
-          fontSize: 12,
-          animation: true,
-          animationDuration: 600,
-          animationDelay: 300,
-        },
-      },
-      series: [
-        {
           type: 'line',
           data: trend.value.map(t => t.count),
           smooth: true,
           symbol: 'circle',
           symbolSize: 8,
-          animation: true,
-          animationDuration: 1500,
+          animationDuration: 2000,
           animationEasing: 'cubicOut',
-          animationDelay: 200,
           lineStyle: {
             width: 3,
             color: '#111827',
@@ -237,20 +186,24 @@ onMounted(async () => {
             opacity: 0.8,
             color: {
               type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
+              x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
                 { offset: 0, color: 'rgba(17, 24, 39, 0.2)' },
                 { offset: 1, color: 'rgba(17, 24, 39, 0)' },
               ],
             },
           },
-        },
-      ],
-    })
+        }],
+      })
+    }
+  } catch (err) {
+    console.error('Failed to load stats:', err)
   }
+}
+
+onMounted(async () => {
+  await refreshData()
+  // refreshData 已经完成了图表初始化和动画
 
   // 监听 timeRange 变化，自动刷新数据
   watch(timeRange, () => {
