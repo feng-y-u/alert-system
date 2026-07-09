@@ -14,6 +14,11 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+        path: '/login-logs',
+        name: 'LoginLogs',
+        component: () => import('../views/LoginLogs.vue'),
+      },
+      {
         path: '',
         name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
