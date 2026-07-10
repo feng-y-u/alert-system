@@ -86,6 +86,9 @@ def run_anomaly_detection() -> str:
         last_check_time = get_last_check_time()
         current_time = datetime.utcnow()
 
+        # 先更新检测时间，避免异常导致重复处理
+        set_last_check_time(current_time)
+
         # 获取上次检测后产生日志的所有用户
         users = db.query(LoginLog.username).filter(
             LoginLog.created_at >= last_check_time
@@ -97,21 +100,14 @@ def run_anomaly_detection() -> str:
 
         for username in users:
             # 频率检测
-            freq_alert = detect_frequency_anomaly(
-                db, username, log_id=None, since=last_check_time
-            )
+            freq_alert = detect_frequency_anomaly(db, username)
             if freq_alert:
                 total_alerts += 1
 
             # 设备检测
-            device_alert = detect_device_anomaly(
-                db, username, log_id=None, since=last_check_time
-            )
+            device_alert = detect_device_anomaly(db, username)
             if device_alert:
                 total_alerts += 1
-
-        # 更新上次检测时间
-        set_last_check_time(current_time)
 
         return f"Anomaly detection completed. Checked {len(users)} users, created {total_alerts} alerts."
 

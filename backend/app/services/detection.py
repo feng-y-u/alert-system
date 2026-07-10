@@ -14,8 +14,7 @@ from app.schemas.alert import AlertCreate
 def detect_frequency_anomaly(
     db: Session,
     username: str,
-    log_id: Optional[int] = None,
-    since: Optional[datetime] = None
+    log_id: Optional[int] = None
 ) -> Optional[Alert]:
     """
     检测频率异常：同一用户5分钟内登录超过10次
@@ -24,7 +23,6 @@ def detect_frequency_anomaly(
         db: 数据库会话
         username: 用户名
         log_id: 实时检测时传入，用于定位当前日志
-        since: 定时检测时传入，用于增量检测
 
     Returns:
         如果检测到异常返回 Alert，否则返回 None
@@ -85,8 +83,7 @@ def detect_frequency_anomaly(
 def detect_device_anomaly(
     db: Session,
     username: str,
-    log_id: Optional[int] = None,
-    since: Optional[datetime] = None
+    log_id: Optional[int] = None
 ) -> Optional[Alert]:
     """
     检测设备异常：同一用户1小时内User-Agent或IP发生变化
@@ -95,7 +92,6 @@ def detect_device_anomaly(
         db: 数据库会话
         username: 用户名
         log_id: 实时检测时传入
-        since: 定时检测时传入
 
     Returns:
         如果检测到异常返回 Alert，否则返回 None
@@ -111,20 +107,14 @@ def detect_device_anomaly(
 
     start_time = end_time - timedelta(hours=1)
 
-    # 查询时间窗口内的不同设备（按user_agent + ip_address组合）
-    logs = db.query(LoginLog).filter(
+    # 查询时间窗口内的不同设备数（按user_agent + ip_address组合）
+    rows = db.query(LoginLog.user_agent, LoginLog.ip_address).filter(
         LoginLog.username == username,
         LoginLog.login_time >= start_time,
         LoginLog.login_time <= end_time
-    ).all()
+    ).distinct().all()
 
-    # 统计不同设备数
-    devices = set()
-    for log in logs:
-        device_key = f"{log.user_agent}|{log.ip_address}"
-        devices.add(device_key)
-
-    device_count = len(devices)
+    device_count = len(rows)
 
     # 判断是否异常（2个及以上设备）
     if device_count < 2:

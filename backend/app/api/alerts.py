@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -72,7 +73,6 @@ def update_alert(
     if update_data.status:
         alert.status = update_data.status
         if update_data.status == "resolved":
-            from datetime import datetime
             alert.resolved_at = datetime.utcnow()
 
     db.commit()
