@@ -5,19 +5,19 @@
         v-model="filters.username"
         placeholder="用户名"
         clearable
-        class="filter-input"
+        class="filter-item"
       />
       <el-input
         v-model="filters.ip_address"
         placeholder="IP地址"
         clearable
-        class="filter-input"
+        class="filter-item"
       />
       <el-select
         v-model="filters.login_status"
         placeholder="登录状态"
         clearable
-        class="filter-select"
+        class="filter-item filter-select"
       >
         <el-option label="成功" value="success" />
         <el-option label="失败" value="failure" />
@@ -29,7 +29,7 @@
         start-placeholder="开始日期"
         end-placeholder="结束日期"
         value-format="YYYY-MM-DD"
-        class="filter-date"
+        class="filter-item filter-date"
       />
       <el-button type="primary" @click="handleSearch">
         <el-icon><Search /></el-icon>
@@ -75,8 +75,8 @@ const handleReset = () => {
 
 <style scoped>
 .filter-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
@@ -89,7 +89,7 @@ const handleReset = () => {
   flex-wrap: wrap;
 }
 
-.filter-input {
+.filter-item {
   width: 160px;
 }
 
@@ -99,5 +99,10 @@ const handleReset = () => {
 
 .filter-date {
   width: 280px;
+}
+
+/* 覆盖日期选择器圆角与按钮一致 */
+.filter-date :deep(.el-input__wrapper) {
+  border-radius: 8px;
 }
 </style>
