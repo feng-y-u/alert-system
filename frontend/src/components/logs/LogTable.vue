@@ -10,7 +10,8 @@
       fontSize: '12px',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
-      borderBottomColor: 'var(--color-border)'
+      borderBottomColor: 'var(--color-border)',
+      whiteSpace: 'nowrap',
     })"
     :cell-style="{
       borderBottomColor: 'var(--color-border-light)'
@@ -18,7 +19,7 @@
   >
     <el-table-column prop="id" label="ID" width="80" />
     <el-table-column prop="username" label="用户名" min-width="120" />
-    <el-table-column prop="login_status" label="状态" width="80">
+    <el-table-column prop="login_status" label="状态" width="80" align="left">
       <template #default="{ row }">
         <StatusTag :status="row.login_status" />
       </template>
@@ -75,9 +76,15 @@ const formatDateTime = (isoString) => {
   overflow-x: auto;
 }
 
+/* 所有数据单元格不换行 */
+.log-table :deep(.el-table__body td.el-table__cell) {
+  white-space: nowrap;
+}
+
+/* 用户代理列：截断加省略号 */
 .ua-text {
   display: block;
-  max-width: 100%;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
