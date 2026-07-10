@@ -15,8 +15,8 @@ const props = defineProps({
 })
 
 const statusClass = computed(() => ({
-  'status-success': props.status === 'success',
-  'status-failure': props.status === 'failure'
+  'status-tag--success': props.status === 'success',
+  'status-tag--failure': props.status === 'failure'
 }))
 
 const label = computed(() => ({
@@ -27,16 +27,22 @@ const label = computed(() => ({
 
 <style scoped>
 .status-tag {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 500;
-  white-space: nowrap;
+  line-height: 1;
 }
 
-.status-success {
-  color: #10b981;
+.status-tag--success {
+  background: var(--color-success-light);
+  color: var(--color-success);
 }
 
-.status-failure {
-  color: #ef4444;
+.status-tag--failure {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
 }
 </style>
