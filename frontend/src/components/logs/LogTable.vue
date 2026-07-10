@@ -1,17 +1,48 @@
 <template>
-  <el-table :data="logs" class="log-table">
+  <el-table
+    :data="logs"
+    class="log-table"
+    stripe
+    :header-cell-style="() => ({
+      backgroundColor: 'var(--color-bg)',
+      color: 'var(--color-text-secondary)',
+      fontWeight: 600,
+      fontSize: '12px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+      borderBottomColor: 'var(--color-border)'
+    })"
+    :cell-style="{
+      borderBottomColor: 'var(--color-border-light)'
+    }"
+  >
+    <el-table-column prop="id" label="ID" width="80" />
     <el-table-column prop="username" label="用户名" min-width="120" />
-    <el-table-column prop="login_status" label="状态" width="60" align="left">
+    <el-table-column prop="login_status" label="状态" width="80">
       <template #default="{ row }">
         <StatusTag :status="row.login_status" />
       </template>
     </el-table-column>
-    <el-table-column prop="login_time" label="登录时间" min-width="160">
+    <el-table-column prop="login_time" label="登录时间" width="170">
       <template #default="{ row }">
         {{ formatDateTime(row.login_time) }}
       </template>
     </el-table-column>
-    <el-table-column prop="ip_address" label="IP地址" min-width="140" />
+    <el-table-column prop="ip_address" label="IP地址" width="140" />
+    <el-table-column label="用户代理" min-width="200" flex="1">
+      <template #default="{ row }">
+        <el-tooltip
+          v-if="row.user_agent"
+          :content="row.user_agent"
+          effect="dark"
+          placement="top"
+          :show-after="300"
+        >
+          <span class="ua-text">{{ row.user_agent }}</span>
+        </el-tooltip>
+        <span v-else class="ua-empty">-</span>
+      </template>
+    </el-table-column>
   </el-table>
 </template>
 
@@ -41,5 +72,19 @@ const formatDateTime = (isoString) => {
 <style scoped>
 .log-table {
   width: 100%;
+  overflow-x: auto;
+}
+
+.ua-text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.ua-empty {
+  color: var(--color-text-tertiary);
 }
 </style>
