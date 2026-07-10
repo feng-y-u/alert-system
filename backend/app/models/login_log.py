@@ -1,12 +1,16 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, DateTime, Index, Integer, String
 
 from app.core.database import Base
 
 
 class LoginLog(Base):
     __tablename__ = "login_logs"
+
+    __table_args__ = (
+        Index("idx_login_logs_username_login_time", "username", "login_time"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), index=True, nullable=False)
