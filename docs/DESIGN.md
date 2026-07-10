@@ -49,8 +49,8 @@ severity(low/medium/high), status(pending/acknowledged/resolved), created_at, up
 | 第1周 | 项目搭建：FastAPI框架 + MySQL/Redis + 基础模型 + Vue 3 + Docker | ✅ |
 | 第2周 | 管理员认证：登录/注册 JWT API + seed 脚本 + 前端登录页 + 路由守卫 | ✅ |
 | 第3周 | 登录日志管理：接收/查询 API + 模拟数据脚本 | ✅ |
-| 第4周 | 异常检测：频率异常 + 设备异常 + Pandas 分析 | ⏳ 当前进行 |
-| 第5周 | 告警系统：生成/查询 API + 邮件通知 | ❌ |
+| 第4周 | 异常检测：频率异常 + 设备异常 + Pandas 分析 | ✅ |
+| 第5周 | 告警系统：生成/查询 API + 邮件通知 | ⏳ 待开始 |
 | 第6周 | 前端页面联调：日志列表 + 告警列表 + ECharts 图表 | ❌ |
 | 第7周 | 功能完善：实时通知 + 优化 + 错误处理 | ❌ |
 | 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ❌ |
