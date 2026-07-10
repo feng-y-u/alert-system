@@ -91,11 +91,7 @@ const formatDateTime = (isoString) => {
 
 <style>
 /* 全局样式覆盖 Element Plus 表格 */
-.log-table .el-table__body td.el-table__cell .cell {
-  white-space: nowrap !important;
-  word-break: keep-all !important;
-}
-
+.log-table .el-table__body td.el-table__cell .cell,
 .log-table .el-table__header th.el-table__cell .cell {
   white-space: nowrap !important;
   word-break: keep-all !important;
