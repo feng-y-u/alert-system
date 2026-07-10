@@ -18,16 +18,16 @@
       whiteSpace: 'nowrap'
     }"
   >
-    <el-table-column prop="id" label="ID" width="70" />
-    <el-table-column prop="username" label="用户名" width="100" />
-    <el-table-column prop="login_time" label="登录时间" width="160" />
-    <el-table-column prop="ip_address" label="IP地址" width="130" />
-    <el-table-column prop="login_status" label="状态" width="80" align="center">
+    <el-table-column prop="id" label="ID" width="60" />
+    <el-table-column prop="username" label="用户名" width="90" />
+    <el-table-column prop="login_time" label="登录时间" width="150" />
+    <el-table-column prop="ip_address" label="IP地址" width="120" />
+    <el-table-column prop="login_status" label="状态" width="70" align="center">
       <template #default="{ row }">
         <StatusTag :status="row.login_status" />
       </template>
     </el-table-column>
-    <el-table-column label="用户代理" width="280">
+    <el-table-column label="用户代理" width="320">
       <template #default="{ row }">
         <el-tooltip
           v-if="row.user_agent"
