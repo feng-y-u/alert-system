@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **类型**：学术项目/毕业设计
 - **详细设计**：[docs/DESIGN.md](docs/DESIGN.md)
-- **当前进展**：第2周（管理员认证）
+- **UI 规范**：[docs/UI.md](docs/UI.md)
 
 ## 技术栈
 
@@ -21,32 +21,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 前端 | Vue 3 + Element Plus + ECharts + Pinia + Vue Router |
 | 分析 | Pandas + NumPy |
 | 约束 | 后端 Black + Flake8，前端 ESLint + Prettier，API 文档 `/docs` |
-
-## 项目结构
-
-```
-backend/
-├── app/
-│   ├── api/           # API 路由（每个功能一个文件）
-│   ├── core/          # 配置 + 数据库 + 安全 + 依赖注入
-│   ├── models/        # SQLAlchemy ORM 模型
-│   ├── schemas/       # Pydantic 请求/响应模式
-│   ├── services/      # 业务逻辑
-│   └── tasks/         # Celery 异步任务
-├── alembic/           # 数据库迁移
-├── tests/             # pytest 测试
-├── scripts/           # 工具脚本（如 seed.py）
-└── requirements.txt
-frontend/
-├── src/
-│   ├── api/           # Axios 客户端
-│   ├── layouts/       # 布局组件
-│   ├── router/        # 路由配置
-│   ├── stores/        # Pinia 状态管理
-│   ├── views/         # 页面视图
-│   └── components/    # Vue 组件
-└── ...
-```
 
 ## 数据流
 
@@ -97,7 +71,10 @@ Token 过期/无效 → 后端返回 401 → 前端清除 token 并跳转 /login
 ## 测试
 
 ```bash
-pytest [-v] [tests/test_file.py] [-k test_name]
+pytest                              # 运行所有测试
+pytest -v                          # 详细输出
+pytest tests/test_security.py      # 运行单个测试文件
+pytest -k test_name                # 运行匹配名称的测试
 ```
 
 使用 pytest + httpx（TestClient），测试文件放在 `tests/`，`conftest.py` 提供 `client` fixture。
@@ -109,17 +86,24 @@ pytest [-v] [tests/test_file.py] [-k test_name]
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000   # 开发服务器
 alembic upgrade head                                        # 应用迁移
 alembic revision --autogenerate -m "描述"                    # 生成迁移
-pytest                                                      # 测试
-celery -A app.tasks worker --loglevel=info                   # 异步任务
+pytest                                                      # 运行测试
+pytest -v                                                   # 详细测试输出
+pytest tests/test_file.py -k test_func                      # 单测试/单函数
+celery -A app.tasks worker --loglevel=info                   # 启动 Celery 工作进程
+celery -A app.tasks beat --loglevel=info                     # 启动 Celery 调度器（定时任务）
+python scripts/seed.py                                       # 创建默认管理员（admin / admin123）
 black . && flake8                                           # 格式化 + 检查
 ```
 
 ### 前端（`frontend/` 目录）
 ```bash
-npm run dev      # 启动（端口 5173）
-npm run build    # 构建
-npm run lint     # ESLint 检查 + 修复
+npm run dev          # 启动开发服务器（端口 5173）
+npm run build        # 生产构建（输出到 dist/）
+npm run preview      # 预览生产构建
+npm run lint         # ESLint 检查（package.json 中未配置修复）
 ```
+
+前端使用 Vite 构建工具，Element Plus 组件库，Pinia 状态管理。
 
 ### Docker（项目根目录）
 ```bash
@@ -139,19 +123,17 @@ SECRET_KEY=dev-secret-key-change-in-production
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## 已实现的模块
+## 开发计划
 
-| 模块 | 文件 | 状态 |
-|---|---|---|
-| 健康检查 | [api/health.py](backend/app/api/health.py) | ✅ |
-| 用户认证（JWT） | auth.py + security.py + deps.py | ✅ |
-| 用户模型 | [models/user.py](backend/app/models/user.py) | ✅ |
-| 登录日志模型 | [models/login_log.py](backend/app/models/login_log.py) | ✅ |
-| 告警模型 | [models/alert.py](backend/app/models/alert.py) | ✅ |
-| 前端路由 | [router/index.js](frontend/src/router/index.js) | ✅ |
-| Axios 客户端 | [api/index.js](frontend/src/api/index.js) | ✅ |
-| Pinia 认证状态 | [stores/auth.js](frontend/src/stores/auth.js) | ✅ |
-| Dashboard 页 | [views/Dashboard.vue](frontend/src/views/Dashboard.vue) | ⚠️ 骨架 |
-| Login 页 | [views/Login.vue](frontend/src/views/Login.vue) | ✅ |
-| Celery 任务 | [tasks/email.py](backend/app/tasks/email.py) + [detection.py](backend/app/tasks/detection.py) | ⚠️ 占位 |
-| 单元测试 | [tests/test_security.py](backend/tests/test_security.py) | ✅ |
+| 周次 | 内容 | 状态 |
+|------|------|------|
+| 第1周 | 项目搭建：FastAPI框架 + MySQL/Redis + 基础模型 + Vue 3 + Docker | ✅ |
+| 第2周 | 管理员认证：登录/注册 JWT API + seed 脚本 + 前端登录页 + 路由守卫 | ✅ |
+| 第3周 | 登录日志管理：接收/查询 API + 模拟数据脚本 | ⏳ 当前进行 |
+| 第4周 | 异常检测：频率异常 + 设备异常 + Pandas 分析 | ❌ |
+| 第5周 | 告警系统：生成/查询 API + 邮件通知 | ❌ |
+| 第6周 | 前端页面联调：日志列表 + 告警列表 + ECharts 图表 | ❌ |
+| 第7周 | 功能完善：实时通知 + 优化 + 错误处理 | ❌ |
+| 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ❌ |
+
+详细设计见 [docs/DESIGN.md](docs/DESIGN.md)，UI 规范见 [docs/UI.md](docs/UI.md)。
