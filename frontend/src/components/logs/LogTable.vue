@@ -22,7 +22,12 @@
     <el-table-column prop="username" label="用户名" width="100" />
     <el-table-column prop="login_time" label="登录时间" width="160" />
     <el-table-column prop="ip_address" label="IP地址" width="130" />
-    <el-table-column label="用户代理" min-width="200" flex="1">
+    <el-table-column prop="login_status" label="状态" width="80" align="center">
+      <template #default="{ row }">
+        <StatusTag :status="row.login_status" />
+      </template>
+    </el-table-column>
+    <el-table-column label="用户代理" width="280">
       <template #default="{ row }">
         <el-tooltip
           v-if="row.user_agent"
@@ -34,11 +39,6 @@
           <span class="ua-text">{{ row.user_agent }}</span>
         </el-tooltip>
         <span v-else class="ua-empty">-</span>
-      </template>
-    </el-table-column>
-    <el-table-column prop="login_status" label="状态" width="80" align="center">
-      <template #default="{ row }">
-        <StatusTag :status="row.login_status" />
       </template>
     </el-table-column>
   </el-table>
