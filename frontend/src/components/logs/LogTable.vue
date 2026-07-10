@@ -14,23 +14,15 @@
       whiteSpace: 'nowrap',
     })"
     :cell-style="{
-      borderBottomColor: 'var(--color-border-light)'
+      borderBottomColor: 'var(--color-border-light)',
+      whiteSpace: 'nowrap'
     }"
   >
-    <el-table-column prop="id" label="ID" width="80" class-name="col-nowrap" />
-    <el-table-column prop="username" label="用户名" min-width="120" class-name="col-nowrap" />
-    <el-table-column prop="login_status" label="状态" width="80" align="left">
-      <template #default="{ row }">
-        <StatusTag :status="row.login_status" />
-      </template>
-    </el-table-column>
-    <el-table-column prop="login_time" label="登录时间" width="170" class-name="col-nowrap">
-      <template #default="{ row }">
-        {{ formatDateTime(row.login_time) }}
-      </template>
-    </el-table-column>
-    <el-table-column prop="ip_address" label="IP地址" width="140" class-name="col-nowrap" />
-    <el-table-column label="用户代理" min-width="200" flex="1" class-name="col-ua">
+    <el-table-column prop="id" label="ID" width="70" />
+    <el-table-column prop="username" label="用户名" width="100" />
+    <el-table-column prop="login_time" label="登录时间" width="160" />
+    <el-table-column prop="ip_address" label="IP地址" width="130" />
+    <el-table-column label="用户代理" min-width="200" flex="1">
       <template #default="{ row }">
         <el-tooltip
           v-if="row.user_agent"
@@ -42,6 +34,11 @@
           <span class="ua-text">{{ row.user_agent }}</span>
         </el-tooltip>
         <span v-else class="ua-empty">-</span>
+      </template>
+    </el-table-column>
+    <el-table-column prop="login_status" label="状态" width="80" align="center">
+      <template #default="{ row }">
+        <StatusTag :status="row.login_status" />
       </template>
     </el-table-column>
   </el-table>
@@ -76,28 +73,31 @@ const formatDateTime = (isoString) => {
   overflow-x: auto;
 }
 
-/* 不换行列 */
-.log-table :deep(.col-nowrap) {
-  white-space: nowrap !important;
-}
-
-/* 用户代理列 */
-.log-table :deep(.col-ua) {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* 用户代理列：截断加省略号 */
 .ua-text {
   display: inline-block;
-  max-width: 280px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: default;
+  vertical-align: middle;
 }
 
 .ua-empty {
   color: var(--color-text-tertiary);
+}
+</style>
+
+<style>
+/* 全局样式覆盖 Element Plus 表格 */
+.log-table .el-table__body td.el-table__cell .cell {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+.log-table .el-table__header th.el-table__cell .cell {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 </style>
