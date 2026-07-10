@@ -47,6 +47,6 @@ const handleChange = () => {
 .pagination-wrapper {
   display: flex;
   justify-content: flex-end;
-  padding-top: 20px;
+  padding-top: 16px;
 }
 </style>
