@@ -1,7 +1,7 @@
 from app.schemas.login_log import LoginLogCreate, LoginLogResponse, LoginLogQuery
 from app.schemas.logs_query import LogQueryParams, LogListResponse
-from app.schemas.user import UserCreate, UserResponse, UserLogin
-from app.schemas.alert import AlertCreate, AlertResponse
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
+from app.schemas.alert import AlertResponse, AlertUpdate
 
 __all__ = [
     "LoginLogCreate",
@@ -12,6 +12,7 @@ __all__ = [
     "UserCreate",
     "UserResponse",
     "UserLogin",
-    "AlertCreate",
+    "Token",
     "AlertResponse",
+    "AlertUpdate",
 ]
