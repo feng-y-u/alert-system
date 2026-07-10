@@ -17,20 +17,20 @@
       borderBottomColor: 'var(--color-border-light)'
     }"
   >
-    <el-table-column prop="id" label="ID" width="80" />
-    <el-table-column prop="username" label="用户名" min-width="120" />
+    <el-table-column prop="id" label="ID" width="80" class-name="col-nowrap" />
+    <el-table-column prop="username" label="用户名" min-width="120" class-name="col-nowrap" />
     <el-table-column prop="login_status" label="状态" width="80" align="left">
       <template #default="{ row }">
         <StatusTag :status="row.login_status" />
       </template>
     </el-table-column>
-    <el-table-column prop="login_time" label="登录时间" width="170">
+    <el-table-column prop="login_time" label="登录时间" width="170" class-name="col-nowrap">
       <template #default="{ row }">
         {{ formatDateTime(row.login_time) }}
       </template>
     </el-table-column>
-    <el-table-column prop="ip_address" label="IP地址" width="140" />
-    <el-table-column label="用户代理" min-width="200" flex="1">
+    <el-table-column prop="ip_address" label="IP地址" width="140" class-name="col-nowrap" />
+    <el-table-column label="用户代理" min-width="200" flex="1" class-name="col-ua">
       <template #default="{ row }">
         <el-tooltip
           v-if="row.user_agent"
@@ -76,15 +76,21 @@ const formatDateTime = (isoString) => {
   overflow-x: auto;
 }
 
-/* 所有数据单元格不换行 */
-.log-table :deep(.el-table__body td.el-table__cell) {
-  white-space: nowrap;
+/* 不换行列 */
+.log-table :deep(.col-nowrap) {
+  white-space: nowrap !important;
 }
 
-/* 用户代理列：截断加省略号 */
+/* 用户代理列 */
+.log-table :deep(.col-ua) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ua-text {
-  display: block;
-  max-width: 300px;
+  display: inline-block;
+  max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
