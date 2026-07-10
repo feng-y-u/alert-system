@@ -6,7 +6,6 @@
       :total="total"
       :page-sizes="[10, 20, 50, 100]"
       layout="total, sizes, prev, pager, next"
-      @change="handleChange"
     />
   </div>
 </template>
@@ -36,11 +35,6 @@ const pageSize = computed({
     emit('change', 0, val)
   }
 })
-
-const handleChange = () => {
-  const skip = (currentPage.value - 1) * pageSize.value
-  emit('change', skip, pageSize.value)
-}
 </script>
 
 <style scoped>
