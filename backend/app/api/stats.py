@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -68,8 +68,14 @@ def get_alert_stats(
     current_user: User = Depends(get_current_active_user),
 ):
     """获取告警维度统计数据（趋势/类型分布/级别分布）"""
+    if days < 1 or days > 365:
+        raise HTTPException(status_code=400, detail="days must be between 1 and 365")
+
     now = datetime.now(timezone.utc)
-    window_start = now - timedelta(days=days)
+    first_day_start = (now - timedelta(days=days - 1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    window_start = first_day_start
 
     # 告警趋势：逐日统计
     trend = []

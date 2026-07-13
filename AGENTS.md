@@ -2,13 +2,14 @@
 
 OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑、文档/config 不一致或需要交叉多处才能推断**的事实。验证过的、能从 `CLAUDE.md`/`README.md` 直接看出的不重复。
 
-## 关键路径与端口（非默认，容易猜错）
+## 关键路径与端口
 
-- **Redis 主机端口是 8880**，不是 6379。`docker-compose.yml` 把容器 6379 映射到主机 8880；`REDIS_URL=redis://localhost:8880/0`。Docker 未启动时 Celery/缓存会失败。
-- **API 前缀是 `/api`，不是 `/api/v1`**，尽管配置变量名是 `API_V1_PREFIX`。新增路由统一挂 `prefix=settings.API_V1_PREFIX`（见 `backend/app/main.py`）。
-- 后端 dev server 端口是 **8001**（8000 曾被占用、8080 被 Steam 占用）；前端 Vite 代理 `/api -> http://localhost:8001`（见 `frontend/vite.config.js`），前端 SFC 服务端口 5173。
-- Docker Compose 启动后：MySQL `localhost:3306`（user `campus_user` / pass `campus123`，db `campus_monitor`），Redis `localhost:8880`。
-- 没有 CI、pre-commit、`opencode.json`；instruction 文件只有 `AGENTS.md`（本文件）与 `CLAUDE.md`（`.superpowers/`、`.claude/` 是工具自身目录）。
+- **Redis 主机端口是 8880**，不是 6379。`docker-compose.yml` 把容器 6379 映射到主机 8880。Docker 未启动时 Celery/缓存会失败。
+- **API 前缀是 `/api`，不是 `/api/v1`** — 配置变量名叫 `API_V1_PREFIX` 但值是 `"/api"`。新增路由统一用 `prefix=settings.API_V1_PREFIX`。
+- 后端 dev port **8001**，前端 Vite port **5173**，Vite 代理 `/api → http://localhost:8001`。
+- Docker Compose 服务：MySQL `localhost:3306`（user `campus_user` / pass `campus123`，db `campus_monitor`），Redis `localhost:8880`。
+- Backend `Dockerfile` 暴露 **8000**（非 8001），dev 与容器端口不一致。
+- 没有 CI、pre-commit、`opencode.json`。
 
 ## 添加新功能的强制步骤（易漏）
 
@@ -34,9 +35,9 @@ OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑�
 
 ## 后端环境变量
 
-- `backend/.env` 已存在，内容与根目录 `.env.example` 的后端段一致（`DATABASE_URL`/`REDIS_URL`/`SECRET_KEY`/`EMAIL_*`），且已被 `.gitignore` 忽略（`.env` 是 ignored 规则）。
 - `pydantic-settings` 从 `.env`（相对 `backend/` 运行目录）加载，`case_sensitive=True` —— `.env` 里 key 必须是大写，否则不生效。
-- **`API_KEY` 与 `ACCESS_TOKEN_EXPIRE_MINUTES` 不在 `.env`/`.env.example`，值来自 `backend/app/core/config.py` 默认**：`ACCESS_TOKEN_EXPIRE_MINUTES=1440`（=24h），`API_KEY="dev-api-key-change-in-production"`。`API_KEY` 已在 `app/core/deps.py` 实际用于 `X-API-Key` 头校验。要覆盖就把大写 key 加到 `backend/.env`，别再依赖根 `.env.example`。
+- `backend/.env` 已被 `.gitignore` 忽略，`backend/.env.example` 是其模板。注意 `backend/.env.example` 写了 `ACCESS_TOKEN_EXPIRE_MINUTES=30`，而 `config.py` 默认是 `1440`（=24h）。如果复制 `.env.example` → `.env`，token 有效期会从 24h 变成 30min。
+- **`API_KEY` 不在 `backend/.env.example`**，默认值在 `config.py`：`"dev-api-key-change-in-production"`。`API_KEY` 已在 `app/core/deps.py` 实际用于 `X-API-Key` 头校验。要覆盖就把大写 key 加到 `backend/.env`。
 - `SECRET_KEY` 与 `API_KEY` 为 dev 占位值，生产必须改。邮件告警走 `EMAIL_*` + `ALERT_EMAIL_FROM`（默认 `campus-monitor@localhost`）；`app/tasks/email.py` 的 `is_email_configured()` 在 `EMAIL_USER` 为空或 host 含 `example` 时返回 False，`send_alert_email` 任务优雅跳过（记 warning，不抛错），不影响告警生成主流程。告警在检测生成后通过 `send_alert_email.delay(alert_id)` 异步触发（见 `app/tasks/detection.py` 两处检测任务）。填真实 SMTP 凭据到 `backend/.env` 即启用，无需改代码。
 
 ## 启动顺序
