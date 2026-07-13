@@ -28,10 +28,10 @@ cd backend
 pip install -r requirements.txt
 alembic upgrade head          # 应用数据库迁移
 python scripts/seed.py        # 创建默认管理员（admin / admin123）
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
-API 文档访问 http://localhost:8000/docs
+API 文档访问 http://localhost:8001/docs
 
 ### 3. 启动前端
 

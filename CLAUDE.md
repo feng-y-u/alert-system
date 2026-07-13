@@ -83,7 +83,7 @@ pytest -k test_name                # 运行匹配名称的测试
 
 ### 后端（`backend/` 目录）
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000   # 开发服务器
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001   # 开发服务器
 alembic upgrade head                                        # 应用迁移
 alembic revision --autogenerate -m "描述"                    # 生成迁移
 pytest                                                      # 运行测试
@@ -120,7 +120,7 @@ REDIS_URL=redis://localhost:6479/0
 SECRET_KEY=dev-secret-key-change-in-production
 
 # frontend/.env（Vite 环境变量必须以 VITE_ 开头）
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=http://localhost:8001
 ```
 
 ## 开发计划

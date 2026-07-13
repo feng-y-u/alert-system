@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     EMAIL_PORT: int = 587
     EMAIL_USER: str = ""
     EMAIL_PASSWORD: str = ""
+    ALERT_EMAIL_FROM: str = "campus-monitor@localhost"
 
     model_config = ConfigDict(env_file=".env", case_sensitive=True)
 

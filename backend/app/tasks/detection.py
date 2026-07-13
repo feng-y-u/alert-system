@@ -9,6 +9,7 @@ from app.core.database import SessionLocal
 from app.models.login_log import LoginLog
 from app.services.detection import detect_device_anomaly, detect_frequency_anomaly
 from app.tasks import celery_app
+from app.tasks.email import send_alert_email
 
 # Redis 客户端用于存储上次检测时间
 redis_client = redis.from_url(settings.REDIS_URL)
@@ -53,11 +54,13 @@ def detect_anomaly_for_log(log_id: int) -> str:
         freq_alert = detect_frequency_anomaly(db, log.username, log_id)
         if freq_alert:
             results.append(f"Frequency alert created: {freq_alert.id}")
+            send_alert_email.delay(freq_alert.id)
 
         # 设备检测
         device_alert = detect_device_anomaly(db, log.username, log_id)
         if device_alert:
             results.append(f"Device alert created: {device_alert.id}")
+            send_alert_email.delay(device_alert.id)
 
         if results:
             return "; ".join(results)
@@ -103,11 +106,13 @@ def run_anomaly_detection() -> str:
             freq_alert = detect_frequency_anomaly(db, username)
             if freq_alert:
                 total_alerts += 1
+                send_alert_email.delay(freq_alert.id)
 
             # 设备检测
             device_alert = detect_device_anomaly(db, username)
             if device_alert:
                 total_alerts += 1
+                send_alert_email.delay(device_alert.id)
 
         return f"Anomaly detection completed. Checked {len(users)} users, created {total_alerts} alerts."
 
