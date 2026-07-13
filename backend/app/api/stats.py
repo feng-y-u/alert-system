@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -57,4 +58,48 @@ def get_stats(
         "pendingAlerts": pending_alerts,
         "activeUsers": active_users,
         "loginTrend": trend,
+    }
+
+
+@router.get("/stats/alerts")
+def get_alert_stats(
+    days: int = 7,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """获取告警维度统计数据（趋势/类型分布/级别分布）"""
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(days=days)
+
+    # 告警趋势：逐日统计
+    trend = []
+    for i in range(days - 1, -1, -1):
+        day = now - timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        count = db.query(Alert).filter(
+            Alert.created_at >= day_start,
+            Alert.created_at < day_end,
+        ).count()
+        trend.append({
+            "date": day_start.strftime("%m-%d"),
+            "count": count,
+        })
+
+    # 类型分布
+    type_rows = db.query(Alert.alert_type, func.count()).filter(
+        Alert.created_at >= window_start,
+    ).group_by(Alert.alert_type).all()
+    type_dist = [{"name": t, "value": c} for t, c in type_rows]
+
+    # 级别分布
+    severity_rows = db.query(Alert.severity, func.count()).filter(
+        Alert.created_at >= window_start,
+    ).group_by(Alert.severity).all()
+    severity_dist = [{"name": s, "value": c} for s, c in severity_rows]
+
+    return {
+        "alertTrend": trend,
+        "typeDist": type_dist,
+        "severityDist": severity_dist,
     }
