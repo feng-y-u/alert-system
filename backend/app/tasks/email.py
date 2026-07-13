@@ -85,7 +85,7 @@ def send_alert_email(self, alert_id: int) -> str:
                 if settings.EMAIL_USER and settings.EMAIL_PASSWORD:
                     server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
                 server.send_message(msg)
-        except smtplib.SMTPException as e:
+        except (smtplib.SMTPException, OSError) as e:
             logger.error("SMTP send failed for alert %s: %s", alert_id, e)
             return f"Email send failed for alert {alert_id}: {e}"
 
