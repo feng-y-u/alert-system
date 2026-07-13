@@ -63,6 +63,30 @@
       <div ref="chartRef" class="chart-container"></div>
     </div>
 
+    <!-- 告警分析区 -->
+    <div class="chart-section">
+      <div class="section-header">
+        <h2 class="section-title">告警趋势</h2>
+      </div>
+      <div ref="alertTrendRef" class="chart-container"></div>
+    </div>
+
+    <div class="alert-charts-grid">
+      <div class="chart-section">
+        <div class="section-header">
+          <h2 class="section-title">告警类型分布</h2>
+        </div>
+        <div ref="typeDistRef" class="chart-container-small"></div>
+      </div>
+
+      <div class="chart-section">
+        <div class="section-header">
+          <h2 class="section-title">严重级别分布</h2>
+        </div>
+        <div ref="severityDistRef" class="chart-container-small"></div>
+      </div>
+    </div>
+
     <!-- 快捷操作 -->
     <div class="quick-actions">
       <h3 class="section-title">快捷操作</h3>
@@ -94,6 +118,7 @@
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import api from '../api'
+import { getAlertStats } from '../api/stats'
 import {
   TrendCharts,
   Warning,
@@ -112,7 +137,17 @@ const stats = reactive({
 const trend = ref([])
 const timeRange = ref('week')
 const chartRef = ref(null)
+const alertTrend = ref([])
+const typeDist = ref([])
+const severityDist = ref([])
+
+const alertTrendRef = ref(null)
+const typeDistRef = ref(null)
+const severityDistRef = ref(null)
 let chartInstance = null
+let alertTrendChart = null
+let typeDistChart = null
+let severityDistChart = null
 
 const formatNumber = (num) => {
   return num.toLocaleString('zh-CN')
@@ -121,20 +156,31 @@ const formatNumber = (num) => {
 const refreshData = async () => {
   try {
     const days = timeRange.value === 'week' ? 7 : 30
-    const res = await api.get('/api/stats', { params: { days } })
-    stats.todayLogins = res.todayLogins
-    stats.pendingAlerts = res.pendingAlerts
-    stats.activeUsers = res.activeUsers
-    trend.value = res.loginTrend || []
+    const [loginRes, alertRes] = await Promise.all([
+      api.get('/api/stats', { params: { days } }),
+      getAlertStats(days),
+    ])
+    stats.todayLogins = loginRes.todayLogins
+    stats.pendingAlerts = loginRes.pendingAlerts
+    stats.activeUsers = loginRes.activeUsers
+    trend.value = loginRes.loginTrend || []
+    alertTrend.value = alertRes.alertTrend || []
+    typeDist.value = alertRes.typeDist || []
+    severityDist.value = alertRes.severityDist || []
 
-    // 销毁旧图表，重建以触发动画
+    // 销毁所有旧图表
     chartInstance?.dispose()
+    alertTrendChart?.dispose()
+    typeDistChart?.dispose()
+    severityDistChart?.dispose()
     chartInstance = null
+    alertTrendChart = null
+    typeDistChart = null
+    severityDistChart = null
 
+    // 登录趋势图（保留现有逻辑，不动！）
     if (chartRef.value) {
-      // 先隐藏容器，让图表在不可见状态渲染
       chartRef.value.style.opacity = '0'
-
       chartInstance = echarts.init(chartRef.value)
       chartInstance.setOption({
         animationDuration: 2500,
@@ -147,10 +193,7 @@ const refreshData = async () => {
           textStyle: { color: '#111827' },
           padding: [12, 16],
         },
-        grid: {
-          left: 0, right: 0, top: 20, bottom: 0,
-          containLabel: true,
-        },
+        grid: { left: 0, right: 0, top: 20, bottom: 0, containLabel: true },
         xAxis: {
           type: 'category',
           data: trend.value.map(t => t.date),
@@ -160,9 +203,7 @@ const refreshData = async () => {
         },
         yAxis: {
           type: 'value',
-          splitLine: {
-            lineStyle: { color: '#f3f4f6', type: 'dashed' },
-          },
+          splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } },
           axisLabel: { color: '#6b7280', fontSize: 12 },
         },
         series: [{
@@ -181,16 +222,11 @@ const refreshData = async () => {
             shadowBlur: 10,
             shadowOffsetY: 5,
           },
-          itemStyle: {
-            color: '#111827',
-            borderWidth: 2,
-            borderColor: '#fff',
-          },
+          itemStyle: { color: '#111827', borderWidth: 2, borderColor: '#fff' },
           areaStyle: {
             opacity: 0.8,
             color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
                 { offset: 0, color: 'rgba(17, 24, 39, 0.2)' },
                 { offset: 1, color: 'rgba(17, 24, 39, 0)' },
@@ -199,12 +235,121 @@ const refreshData = async () => {
           },
         }],
       })
-
-      // 图表渲染后淡入（轴标签 + 背景渐显）
       requestAnimationFrame(() => {
         chartRef.value.style.opacity = '1'
       })
     }
+
+    // === BEGIN NEW CODE: 告警趋势折线图 ===
+    if (alertTrendRef.value) {
+      alertTrendChart = echarts.init(alertTrendRef.value)
+      alertTrendChart.setOption({
+        animationDuration: 2500,
+        animationEasing: 'cubicOut',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#e5e7eb',
+          borderWidth: 1,
+          textStyle: { color: '#111827' },
+          padding: [12, 16],
+        },
+        grid: { left: 0, right: 0, top: 20, bottom: 0, containLabel: true },
+        xAxis: {
+          type: 'category',
+          data: alertTrend.value.map(t => t.date),
+          axisLine: { lineStyle: { color: '#e5e7eb' } },
+          axisTick: { show: false },
+          axisLabel: { color: '#6b7280', fontSize: 12 },
+        },
+        yAxis: {
+          type: 'value',
+          splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } },
+          axisLabel: { color: '#6b7280', fontSize: 12 },
+        },
+        series: [{
+          type: 'line',
+          data: alertTrend.value.map(t => t.count),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 8,
+          lineStyle: {
+            width: 3,
+            color: '#F59E0B',
+            shadowColor: 'rgba(245, 158, 11, 0.3)',
+            shadowBlur: 10,
+            shadowOffsetY: 5,
+          },
+          itemStyle: { color: '#F59E0B', borderWidth: 2, borderColor: '#fff' },
+          areaStyle: {
+            opacity: 0.8,
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(245, 158, 11, 0.2)' },
+                { offset: 1, color: 'rgba(245, 158, 11, 0)' },
+              ],
+            },
+          },
+        }],
+      })
+    }
+
+    // === 告警类型分布环形图 ===
+    if (typeDistRef.value) {
+      typeDistChart = echarts.init(typeDistRef.value)
+      const typeNameMap = { frequency: '频率异常', device: '设备异常' }
+      typeDistChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        legend: { bottom: 0, textStyle: { color: '#6b7280', fontSize: 12 } },
+        series: [{
+          type: 'pie',
+          radius: ['45%', '70%'],
+          center: ['50%', '45%'],
+          avoidLabelOverlap: false,
+          label: { show: false },
+          labelLine: { show: false },
+          data: typeDist.value.map((item, i) => ({
+            name: typeNameMap[item.name] || item.name,
+            value: item.value,
+            itemStyle: { color: ['#111827', '#F59E0B'][i % 2] },
+          })),
+        }],
+      })
+    }
+
+    // === 严重级别分布柱状图 ===
+    if (severityDistRef.value) {
+      severityDistChart = echarts.init(severityDistRef.value)
+      const severityNameMap = { low: '低', medium: '中', high: '高' }
+      const severityColorMap = { low: '#3B82F6', medium: '#F59E0B', high: '#EF4444' }
+      severityDistChart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: 0, right: 0, top: 20, bottom: 0, containLabel: true },
+        xAxis: {
+          type: 'category',
+          data: severityDist.value.map(s => severityNameMap[s.name] || s.name),
+          axisLine: { lineStyle: { color: '#e5e7eb' } },
+          axisTick: { show: false },
+          axisLabel: { color: '#6b7280', fontSize: 12 },
+        },
+        yAxis: {
+          type: 'value',
+          splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } },
+          axisLabel: { color: '#6b7280', fontSize: 12 },
+        },
+        series: [{
+          type: 'bar',
+          data: severityDist.value.map(s => ({
+            value: s.value,
+            itemStyle: { color: severityColorMap[s.name] || '#111827' },
+          })),
+          barWidth: '40%',
+          itemStyle: { borderRadius: [6, 6, 0, 0] },
+        }],
+      })
+    }
+    // === END NEW CODE ===
   } catch (err) {
     console.error('Failed to load stats:', err)
   }
@@ -221,6 +366,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   chartInstance?.dispose()
+  alertTrendChart?.dispose()
+  typeDistChart?.dispose()
+  severityDistChart?.dispose()
 })
 </script>
 
@@ -420,7 +568,22 @@ onUnmounted(() => {
   color: var(--color-text-primary);
 }
 
+/* === 告警图表区 === */
+.alert-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.chart-container-small {
+  height: 280px;
+}
+
 @media (max-width: 1024px) {
+  .alert-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
