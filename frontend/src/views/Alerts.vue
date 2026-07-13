@@ -1,47 +1,105 @@
 <template>
   <div class="alerts-page">
-    <h1 class="page-title">告警列表</h1>
-    <div class="placeholder-card">
-      <el-icon :size="48" color="#9ca3af"><Warning /></el-icon>
-      <p class="placeholder-text">告警功能开发中，敬请期待</p>
-      <p class="placeholder-sub">第5周实现</p>
+    <AlertFilter @search="handleSearch" @reset="handleReset" />
+
+    <div class="table-card" v-loading="loading">
+      <AlertTable
+        v-if="alerts.length > 0"
+        :alerts="alerts"
+        @status-change="handleStatusChange"
+      />
+      <el-empty v-else description="暂无告警" />
+
+      <AlertPagination
+        :total="total"
+        :skip="skip"
+        :limit="limit"
+        @change="handlePageChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { Warning } from '@element-plus/icons-vue'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import AlertFilter from '../components/alerts/AlertFilter.vue'
+import AlertTable from '../components/alerts/AlertTable.vue'
+import AlertPagination from '../components/alerts/AlertPagination.vue'
+import { getAlerts, updateAlertStatus } from '../api/alerts'
+
+const alerts = ref([])
+const total = ref(0)
+const skip = ref(0)
+const limit = ref(50)
+const loading = ref(false)
+const currentFilters = ref({})
+
+const fetchAlerts = async () => {
+  loading.value = true
+  try {
+    const res = await getAlerts({
+      skip: skip.value,
+      limit: limit.value,
+      ...currentFilters.value
+    })
+    alerts.value = res.items
+    total.value = res.total
+  } catch (err) {
+    console.error('Failed to fetch alerts:', err)
+    alerts.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = (params) => {
+  skip.value = 0
+  currentFilters.value = params
+  fetchAlerts()
+}
+
+const handleReset = () => {
+  skip.value = 0
+  currentFilters.value = {}
+  fetchAlerts()
+}
+
+const handlePageChange = (newSkip, newLimit) => {
+  skip.value = newSkip
+  limit.value = newLimit
+  fetchAlerts()
+}
+
+const handleStatusChange = async (alertId, newStatus) => {
+  try {
+    await updateAlertStatus(alertId, newStatus)
+    ElMessage.success('告警状态已更新')
+    fetchAlerts()
+  } catch (err) {
+    console.error('Failed to update alert status:', err)
+    ElMessage.error('更新告警状态失败')
+  }
+}
+
+onMounted(fetchAlerts)
 </script>
 
 <style scoped>
 .alerts-page {
-  padding: 32px;
+  padding: 0;
 }
 
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 24px;
-}
-
-.placeholder-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+.table-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 64px;
-  text-align: center;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.placeholder-text {
-  font-size: 16px;
-  color: #6b7280;
-  margin-top: 16px;
-}
-
-.placeholder-sub {
-  font-size: 14px;
-  color: #9ca3af;
-  margin-top: 8px;
+.table-card :deep(.el-empty__description p) {
+  color: #9CA3AF;
 }
 </style>

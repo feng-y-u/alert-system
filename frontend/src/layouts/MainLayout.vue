@@ -102,7 +102,7 @@ const pageTitle = computed(() => {
 const menuItems = [
   { path: '/', label: '仪表盘', icon: Monitor, disabled: false },
   { path: '/login-logs', label: '登录日志', icon: Document, disabled: false },
-  { path: '/alerts', label: '告警列表', icon: WarningFilled, disabled: true },
+  { path: '/alerts', label: '告警列表', icon: WarningFilled, disabled: false },
 ]
 
 const handleCommand = (cmd) => {
