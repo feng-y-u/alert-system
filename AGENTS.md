@@ -4,10 +4,10 @@ OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑�
 
 ## 关键路径与端口（非默认，容易猜错）
 
-- **Redis 主机端口是 6479**，不是 6379。`docker-compose.yml` 把容器 6379 映射到主机 6479；`REDIS_URL=redis://localhost:6479/0`。Docker 未启动时 Celery/缓存会失败。
+- **Redis 主机端口是 8880**，不是 6379。`docker-compose.yml` 把容器 6379 映射到主机 8880；`REDIS_URL=redis://localhost:8880/0`。Docker 未启动时 Celery/缓存会失败。
 - **API 前缀是 `/api`，不是 `/api/v1`**，尽管配置变量名是 `API_V1_PREFIX`。新增路由统一挂 `prefix=settings.API_V1_PREFIX`（见 `backend/app/main.py`）。
 - 后端 dev server 端口是 **8001**（8000 曾被占用、8080 被 Steam 占用）；前端 Vite 代理 `/api -> http://localhost:8001`（见 `frontend/vite.config.js`），前端 SFC 服务端口 5173。
-- Docker Compose 启动后：MySQL `localhost:3306`（user `campus_user` / pass `campus123`，db `campus_monitor`），Redis `localhost:6479`。
+- Docker Compose 启动后：MySQL `localhost:3306`（user `campus_user` / pass `campus123`，db `campus_monitor`），Redis `localhost:8880`。
 - 没有 CI、pre-commit、`opencode.json`；instruction 文件只有 `AGENTS.md`（本文件）与 `CLAUDE.md`（`.superpowers/`、`.claude/` 是工具自身目录）。
 
 ## 添加新功能的强制步骤（易漏）
@@ -52,7 +52,7 @@ cd frontend && npm install && npm run dev  # 5. 前端 :5173
 # 可选异步：celery -A app.tasks worker --loglevel=info
 ```
 
-Celery 任务（邮件/检测）需 Redis（端口 6479）在跑，否则 worker 启动即报连不上 broker。Celery beat 调度器命令：`celery -A app.tasks beat --loglevel=info`。
+Celery 任务（邮件/检测）需 Redis（端口 8880）在跑，否则 worker 启动即报连不上 broker。Celery beat 调度器命令：`celery -A app.tasks beat --loglevel=info`。
 
 ## 已知边界（当前规模下不重构，扩展时再处理）
 

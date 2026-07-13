@@ -1,6 +1,6 @@
 """异常检测服务"""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import func
@@ -36,7 +36,7 @@ def detect_frequency_anomaly(
         end_time = current_log.login_time
     else:
         # 定时检测：使用当前时间
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
 
     start_time = end_time - timedelta(minutes=5)
 
@@ -103,7 +103,7 @@ def detect_device_anomaly(
             return None
         end_time = current_log.login_time
     else:
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
 
     start_time = end_time - timedelta(hours=1)
 
@@ -167,7 +167,7 @@ def should_create_alert(
     Returns:
         True 表示应该创建新告警，False 表示已存在未处理的同类告警
     """
-    since = datetime.utcnow() - timedelta(hours=24)
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
 
     existing = db.query(Alert).filter(
         Alert.username == username,

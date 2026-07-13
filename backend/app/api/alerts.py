@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -73,7 +73,7 @@ def update_alert(
     if update_data.status:
         alert.status = update_data.status
         if update_data.status == "resolved":
-            alert.resolved_at = datetime.utcnow()
+            alert.resolved_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(alert)

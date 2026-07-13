@@ -1,6 +1,6 @@
 """异常检测服务测试"""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy.orm import Session
@@ -22,7 +22,7 @@ def test_detect_frequency_anomaly_normal(db: Session):
     for i in range(5):
         log_data = LoginLogCreate(
             username="testuser",
-            login_time=datetime.utcnow() - timedelta(minutes=i),
+            login_time=datetime.now(timezone.utc) - timedelta(minutes=i),
             ip_address="192.168.1.1",
             user_agent="Mozilla/5.0",
             login_status="success"
@@ -37,7 +37,7 @@ def test_detect_frequency_anomaly_normal(db: Session):
 def test_detect_frequency_anomaly_medium(db: Session):
     """测试中等级别频率异常（10-30次）"""
     # 创建15条登录记录（5分钟内）
-    base_time = datetime.utcnow()
+    base_time = datetime.now(timezone.utc)
     for i in range(15):
         log_data = LoginLogCreate(
             username="testuser",
@@ -58,7 +58,7 @@ def test_detect_frequency_anomaly_medium(db: Session):
 def test_detect_frequency_anomaly_high(db: Session):
     """测试高级别频率异常（>30次）"""
     # 创建35条登录记录（5分钟内）
-    base_time = datetime.utcnow()
+    base_time = datetime.now(timezone.utc)
     for i in range(35):
         log_data = LoginLogCreate(
             username="testuser",
@@ -77,7 +77,7 @@ def test_detect_frequency_anomaly_high(db: Session):
 
 def test_detect_device_anomaly_single_device(db: Session):
     """测试单设备登录（不触发告警）"""
-    base_time = datetime.utcnow()
+    base_time = datetime.now(timezone.utc)
     for i in range(3):
         log_data = LoginLogCreate(
             username="testuser",
@@ -94,7 +94,7 @@ def test_detect_device_anomaly_single_device(db: Session):
 
 def test_detect_device_anomaly_multiple_devices(db: Session):
     """测试多设备登录（触发告警）"""
-    base_time = datetime.utcnow()
+    base_time = datetime.now(timezone.utc)
 
     # 设备1
     log_data = LoginLogCreate(

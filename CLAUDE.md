@@ -116,7 +116,7 @@ docker-compose down     # 停止
 ```bash
 # backend/.env
 DATABASE_URL=mysql+pymysql://campus_user:campus123@localhost:3306/campus_monitor
-REDIS_URL=redis://localhost:6479/0
+REDIS_URL=redis://localhost:8880/0
 SECRET_KEY=dev-secret-key-change-in-production
 
 # frontend/.env（Vite 环境变量必须以 VITE_ 开头）

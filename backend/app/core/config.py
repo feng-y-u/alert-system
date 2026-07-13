@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api"
 
     DATABASE_URL: str = "mysql+pymysql://campus_user:campus123@localhost:3306/campus_monitor"
-    REDIS_URL: str = "redis://localhost:6479/0"
+    REDIS_URL: str = "redis://localhost:8880/0"
 
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440

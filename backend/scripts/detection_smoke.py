@@ -3,7 +3,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.core.database import SessionLocal
 from app.models.login_log import LoginLog
 from app.models.alert import Alert
@@ -25,7 +25,7 @@ def test_frequency_anomaly():
         db.commit()
 
         # 插入 15 条登录记录（5分钟内）
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         for i in range(15):
             log = LoginLog(
                 username="testuser",
@@ -64,7 +64,7 @@ def test_device_anomaly():
         db.commit()
 
         # 插入 3 条不同设备/IP 的登录记录
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         devices = [
             ("192.168.1.1", "Mozilla/5.0 (Windows NT 10.0)"),
             ("192.168.1.2", "Mozilla/5.0 (iPhone; CPU iPhone OS)"),
@@ -103,7 +103,7 @@ def test_deduplication():
     db = SessionLocal()
     try:
         username = "testuser"
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # 先插入5条登录记录
         for i in range(5):

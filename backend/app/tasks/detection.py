@@ -1,6 +1,6 @@
 """Celery 异步任务：异常检测"""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import redis
 
@@ -23,7 +23,7 @@ def get_last_check_time() -> datetime:
     if last_check:
         return datetime.fromisoformat(last_check.decode())
     # 默认返回1小时前
-    return datetime.utcnow() - timedelta(hours=1)
+    return datetime.now(timezone.utc) - timedelta(hours=1)
 
 
 def set_last_check_time(time: datetime):
@@ -87,7 +87,7 @@ def run_anomaly_detection() -> str:
     try:
         # 获取上次检测时间
         last_check_time = get_last_check_time()
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
 
         # 先更新检测时间，避免异常导致重复处理
         set_last_check_time(current_time)
