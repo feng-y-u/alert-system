@@ -7,7 +7,7 @@ OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑�
 - **Redis 主机端口是 8880**，不是 6379。`docker-compose.yml` 把容器 6379 映射到主机 8880。Docker 未启动时 Celery/缓存会失败。
 - **API 前缀是 `/api`，不是 `/api/v1`** — 配置变量名叫 `API_V1_PREFIX` 但值是 `"/api"`。新增路由统一用 `prefix=settings.API_V1_PREFIX`。
 - 后端 dev port **8001**，前端 Vite port **5173**，Vite 代理 `/api → http://localhost:8001`。
-- Docker Compose 服务：MySQL `localhost:3306`（user `campus_user` / pass `campus123`，db `campus_monitor`），Redis `localhost:8880`。
+- Docker Compose 服务：MySQL `localhost:8881`（user `campus_user` / pass `campus123`，db `campus_monitor`，原 3306 因 Hyper-V 端口冲突改 8881），Redis `localhost:8880`。
 - Backend `Dockerfile` 暴露 **8000**（非 8001），dev 与容器端口不一致。
 - 没有 CI、pre-commit、`opencode.json`。
 

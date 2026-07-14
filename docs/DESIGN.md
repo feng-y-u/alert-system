@@ -52,7 +52,7 @@ severity(low/medium/high), status(pending/acknowledged/resolved), created_at, up
 | 第4周 | 异常检测：频率异常 + 设备异常 + Pandas 分析 | ✅ |
 | 第5周 | 告警系统：生成/查询 API + 邮件通知 | ✅ |
 | 第6周 | 前端页面联调：日志列表 + 告警列表 + ECharts 图表 | ✅ |
-| 第7周 | 功能完善：实时通知 + 优化 + 错误处理 | ❌ |
+| 第7周 | 功能完善：实时通知 + 优化 + 错误处理 | ✅ |
 | 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ❌ |
 
 ### 后续扩展
