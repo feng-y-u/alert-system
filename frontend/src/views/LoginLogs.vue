@@ -3,15 +3,22 @@
     <LogFilter @search="handleSearch" @reset="handleReset" />
 
     <div class="table-card" v-loading="loading">
-      <LogTable v-if="logs.length > 0" :logs="logs" />
-      <el-empty v-else description="暂无登录日志" />
+      <div v-if="error" class="error-placeholder">
+        <p>数据加载失败，请稍后重试</p>
+        <el-button type="primary" @click="fetchLogs">重试</el-button>
+      </div>
 
-      <LogPagination
-        :total="total"
-        :skip="skip"
-        :limit="limit"
-        @change="handlePageChange"
-      />
+      <template v-else>
+        <LogTable v-if="logs.length > 0" :logs="logs" />
+        <el-empty v-else description="暂无登录日志" />
+
+        <LogPagination
+          :total="total"
+          :skip="skip"
+          :limit="limit"
+          @change="handlePageChange"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -28,10 +35,12 @@ const total = ref(0)
 const skip = ref(0)
 const limit = ref(50)
 const loading = ref(false)
+const error = ref(false)
 const currentFilters = ref({})
 
 const fetchLogs = async () => {
   loading.value = true
+  error.value = false
   try {
     const res = await getLogs({
       skip: skip.value,
@@ -42,8 +51,7 @@ const fetchLogs = async () => {
     total.value = res.total
   } catch (err) {
     console.error('Failed to fetch logs:', err)
-    logs.value = []
-    total.value = 0
+    error.value = true
   } finally {
     loading.value = false
   }
@@ -86,5 +94,20 @@ onMounted(fetchLogs)
 /* 空状态文字颜色与 Caption 层级一致 */
 .table-card :deep(.el-empty__description p) {
   color: #9CA3AF;
+}
+
+.error-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 0;
+}
+
+.error-placeholder p {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  margin: 0;
 }
 </style>
