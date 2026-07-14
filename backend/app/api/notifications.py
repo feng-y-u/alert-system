@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-import redis
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import decode_access_token
@@ -36,22 +35,27 @@ async def stream_notifications(
 ):
     _get_user_from_token(token, db)
 
-    r = redis.from_url(settings.REDIS_URL)
+    import redis.asyncio as aioredis
+
+    r = aioredis.from_url(settings.REDIS_URL)
     pubsub = r.pubsub()
-    pubsub.subscribe("alerts")
+    await pubsub.subscribe("alerts")
 
     async def event_generator():
         try:
             while True:
-                message = pubsub.get_message(timeout=1.0)
+                message = await pubsub.get_message(
+                    timeout=1.0, ignore_subscribe_messages=True
+                )
                 if message and message["type"] == "message":
-                    yield f"data: {message['data']}\n\n"
+                    yield f"data: {message['data'].decode()}\n\n"
                 else:
                     yield f": heartbeat\n\n"
         except Exception:
             pass
         finally:
-            pubsub.unsubscribe("alerts")
-            pubsub.close()
+            await pubsub.unsubscribe("alerts")
+            await pubsub.close()
+            await r.close()
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
