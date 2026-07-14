@@ -1,0 +1,103 @@
+<template>
+  <div ref="chartRef" class="chart-container"></div>
+</template>
+
+<script setup>
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import * as echarts from 'echarts'
+
+const props = defineProps({
+  data: { type: Array, default: () => [] }
+})
+
+const chartRef = ref(null)
+let chart = null
+
+const buildOption = (data) => ({
+  animationDuration: 2500,
+  animationEasing: 'cubicOut',
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: '#e5e7eb',
+    borderWidth: 1,
+    textStyle: { color: '#111827' },
+    padding: [12, 16],
+  },
+  grid: { left: 0, right: 0, top: 20, bottom: 0, containLabel: true },
+  xAxis: {
+    type: 'category',
+    data: data.map(t => t.date),
+    axisLine: { lineStyle: { color: '#e5e7eb' } },
+    axisTick: { show: false },
+    axisLabel: { color: '#6b7280', fontSize: 12 },
+  },
+  yAxis: {
+    type: 'value',
+    splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } },
+    axisLabel: { color: '#6b7280', fontSize: 12 },
+  },
+  series: [{
+    type: 'line',
+    data: data.map(t => t.count),
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 8,
+    animationDuration: 2500,
+    animationEasing: 'cubicOut',
+    animationDelay: 400,
+    lineStyle: {
+      width: 3,
+      color: '#111827',
+      shadowColor: 'rgba(17, 24, 39, 0.3)',
+      shadowBlur: 10,
+      shadowOffsetY: 5,
+    },
+    itemStyle: { color: '#111827', borderWidth: 2, borderColor: '#fff' },
+    areaStyle: {
+      opacity: 0.8,
+      color: {
+        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [
+          { offset: 0, color: 'rgba(17, 24, 39, 0.2)' },
+          { offset: 1, color: 'rgba(17, 24, 39, 0)' },
+        ],
+      },
+    },
+  }],
+})
+
+const render = () => {
+  if (!chartRef.value) return
+  chart?.dispose()
+  chart = echarts.init(chartRef.value)
+  chart.setOption(buildOption(props.data))
+}
+
+onMounted(() => {
+  chartRef.value.style.opacity = '0'
+  render()
+  requestAnimationFrame(() => {
+    if (chartRef.value) chartRef.value.style.opacity = '1'
+  })
+})
+
+watch(() => props.data, () => {
+  if (chartRef.value) chartRef.value.style.opacity = '0'
+  render()
+  requestAnimationFrame(() => {
+    if (chartRef.value) chartRef.value.style.opacity = '1'
+  })
+})
+
+onUnmounted(() => {
+  chart?.dispose()
+})
+</script>
+
+<style scoped>
+.chart-container {
+  height: 320px;
+  transition: opacity 0.8s ease;
+}
+</style>
