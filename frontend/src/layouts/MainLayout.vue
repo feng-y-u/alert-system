@@ -10,16 +10,24 @@
       </div>
 
       <nav class="sidebar-nav">
-        <router-link
-          v-for="item in menuItems"
-          :key="item.path"
-          :to="item.path"
-          :class="['nav-item', { disabled: item.disabled }]"
-        >
-          <el-icon :size="20">
-            <component :is="item.icon" />
-          </el-icon>
-          <span v-if="!isCollapse" class="nav-label">{{ item.label }}</span>
+        <router-link to="/" :class="['nav-item']">
+          <el-icon :size="20"><Monitor /></el-icon>
+          <span v-if="!isCollapse" class="nav-label">仪表盘</span>
+        </router-link>
+        <router-link to="/login-logs" :class="['nav-item']">
+          <el-icon :size="20"><Document /></el-icon>
+          <span v-if="!isCollapse" class="nav-label">登录日志</span>
+        </router-link>
+        <router-link to="/alerts" :class="['nav-item']">
+          <el-icon :size="20"><WarningFilled /></el-icon>
+          <span v-if="!isCollapse" class="nav-label">
+            告警列表
+            <el-badge
+              :value="notificationStore.unreadCount"
+              :hidden="notificationStore.unreadCount === 0"
+              class="nav-badge"
+            />
+          </span>
         </router-link>
       </nav>
     </aside>
@@ -68,9 +76,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useNotificationStore } from '../stores/notification'
 import {
   Monitor,
   Document,
@@ -84,6 +93,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const isCollapse = ref(false)
 const toggleCollapse = () => (isCollapse.value = !isCollapse.value)
@@ -99,18 +109,23 @@ const pageTitle = computed(() => {
   return titles[route.path] || '仪表盘'
 })
 
-const menuItems = [
-  { path: '/', label: '仪表盘', icon: Monitor, disabled: false },
-  { path: '/login-logs', label: '登录日志', icon: Document, disabled: false },
-  { path: '/alerts', label: '告警列表', icon: WarningFilled, disabled: false },
-]
-
 const handleCommand = (cmd) => {
   if (cmd === 'logout') {
     authStore.logout()
     router.push('/login')
   }
 }
+
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    notificationStore.connect(token)
+  }
+})
+
+onUnmounted(() => {
+  notificationStore.disconnect()
+})
 </script>
 
 <style scoped>
@@ -212,6 +227,10 @@ const handleCommand = (cmd) => {
 .nav-label {
   font-size: 14px;
   white-space: nowrap;
+}
+
+.nav-badge {
+  margin-left: 8px;
 }
 
 /* === 主内容区 === */
