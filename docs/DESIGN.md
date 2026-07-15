@@ -53,7 +53,7 @@ severity(low/medium/high), status(pending/acknowledged/resolved), created_at, up
 | 第5周 | 告警系统：生成/查询 API + 邮件通知 | ✅ |
 | 第6周 | 前端页面联调：日志列表 + 告警列表 + ECharts 图表 | ✅ |
 | 第7周 | 功能完善：实时通知 + 优化 + 错误处理 | ✅ |
-| 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ❌ |
+| 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ✅ |
 
 ### 后续扩展
 地理位置检测（IP库 → `location` 类型告警）、WebSocket 实时监控、告警规则配置界面、移动端适配

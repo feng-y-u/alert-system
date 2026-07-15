@@ -1,8 +1,27 @@
 <template>
+  <OfflineBanner
+    :isOnline="isOnline"
+    :wasOffline="wasOffline"
+    @reconnected="onReconnected"
+  />
   <router-view />
 </template>
 
 <script setup>
+import { useOnline } from './composables/useOnline'
+import { useNotificationStore } from './stores/notification'
+import OfflineBanner from './components/common/OfflineBanner.vue'
+
+const { isOnline, wasOffline, resetOfflineFlag } = useOnline()
+const notificationStore = useNotificationStore()
+
+function onReconnected() {
+  resetOfflineFlag()
+  const token = localStorage.getItem('token')
+  if (token) {
+    notificationStore.fetchLatestAlertsOnReconnect(token)
+  }
+}
 </script>
 
 <style>

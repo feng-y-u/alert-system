@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     API_KEY: str = "dev-api-key-change-in-production"
 
     EMAIL_HOST: str = "smtp.example.com"
-    EMAIL_PORT: int = 587
+    EMAIL_PORT: int = 465
     EMAIL_USER: str = ""
     EMAIL_PASSWORD: str = ""
     ALERT_EMAIL_FROM: str = "campus-monitor@localhost"

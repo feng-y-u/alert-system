@@ -5,7 +5,7 @@
     <div class="table-card" v-loading="loading">
       <div v-if="error" class="error-placeholder">
         <p>数据加载失败，请稍后重试</p>
-        <el-button type="primary" @click="fetchAlerts">重试</el-button>
+        <el-button type="primary" @click="fetchAlerts" :disabled="retryCooldown">重试</el-button>
       </div>
 
       <template v-else>
@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import AlertFilter from '../components/alerts/AlertFilter.vue'
 import AlertTable from '../components/alerts/AlertTable.vue'
@@ -44,9 +44,12 @@ const skip = ref(0)
 const limit = ref(50)
 const loading = ref(false)
 const error = ref(false)
+const retryCooldown = ref(false)
+let retryTimer = null
 const currentFilters = ref({})
 
 const fetchAlerts = async () => {
+  if (retryCooldown.value) return
   loading.value = true
   error.value = false
   try {
@@ -60,6 +63,11 @@ const fetchAlerts = async () => {
   } catch (err) {
     console.error('Failed to fetch alerts:', err)
     error.value = true
+    retryCooldown.value = true
+    clearTimeout(retryTimer)
+    retryTimer = setTimeout(() => {
+      retryCooldown.value = false
+    }, 5000)
   } finally {
     loading.value = false
   }
@@ -97,6 +105,11 @@ const handleStatusChange = async (alertId, newStatus) => {
 onMounted(() => {
   fetchAlerts()
   notificationStore.clearUnread()
+})
+
+onUnmounted(() => {
+  clearTimeout(retryTimer)
+  retryTimer = null
 })
 </script>
 

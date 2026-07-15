@@ -9,11 +9,14 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.core.database import Base
+from app.core.config import settings
 from app.models import User, LoginLog, Alert
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 target_metadata = Base.metadata
 

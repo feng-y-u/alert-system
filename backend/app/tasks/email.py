@@ -80,8 +80,7 @@ def send_alert_email(self, alert_id: int) -> str:
         msg = build_alert_email(alert, recipients)
 
         try:
-            with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
-                server.starttls()
+            with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
                 if settings.EMAIL_USER and settings.EMAIL_PASSWORD:
                     server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
                 server.send_message(msg)

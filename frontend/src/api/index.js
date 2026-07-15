@@ -31,6 +31,8 @@ api.interceptors.response.use(
       ElMessage.error('无权限访问')
     } else if (status === 429) {
       ElMessage.warning('请求过于频繁，请稍后再试')
+    } else if (error.code === 'ECONNABORTED') {
+      ElMessage.error('请求超时，请稍后重试')
     } else if (!error.response) {
       ElMessage.error('网络连接失败，请检查网络')
     }

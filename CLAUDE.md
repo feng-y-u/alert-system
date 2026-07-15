@@ -133,7 +133,7 @@ VITE_API_BASE_URL=http://localhost:8001
 | 第4周 | 异常检测：频率异常 + 设备异常 + Pandas 分析 | ✅ |
 | 第5周 | 告警系统：生成/查询 API + 邮件通知 | ✅ |
 | 第6周 | 前端页面联调：日志列表 + 告警列表 + ECharts 图表 | ✅ |
-| 第7周 | 功能完善：实时通知 + 优化 + 错误处理 | ❌ |
-| 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ❌ |
+| 第7周 | 功能完善：SSE实时通知 + 错误处理 + Dashboard优化 | ✅ |
+| 第8周 | 测试与部署：集成测试 + Docker 部署 + 文档 | ✅ |
 
 详细设计见 [docs/DESIGN.md](docs/DESIGN.md)，UI 规范见 [docs/UI.md](docs/UI.md)。

@@ -3,7 +3,7 @@
     <!-- 错误状态 -->
     <div v-if="error" class="error-placeholder">
       <p>数据加载失败，请稍后重试</p>
-      <el-button type="primary" @click="refreshData">重试</el-button>
+      <el-button type="primary" @click="refreshData" :disabled="retryCooldown">重试</el-button>
     </div>
 
     <template v-else>
@@ -17,10 +17,6 @@
             </div>
           </div>
           <div class="stat-value">{{ formatNumber(stats.todayLogins) }}</div>
-          <div class="stat-footer">
-            <span class="stat-trend positive">+12%</span>
-            <span class="stat-compare">较昨日</span>
-          </div>
         </div>
 
         <div class="stat-card">
@@ -33,12 +29,6 @@
           <div class="stat-value" :class="{ 'text-warning': stats.pendingAlerts > 0 }">
             {{ stats.pendingAlerts }}
           </div>
-          <div class="stat-footer">
-            <span class="stat-trend" :class="stats.pendingAlerts > 10 ? 'negative' : 'neutral'">
-              {{ stats.pendingAlerts > 10 ? '↑' : '→' }}
-            </span>
-            <span class="stat-compare">需关注</span>
-          </div>
         </div>
 
         <div class="stat-card">
@@ -49,10 +39,6 @@
             </div>
           </div>
           <div class="stat-value">{{ formatNumber(stats.activeUsers) }}</div>
-          <div class="stat-footer">
-            <span class="stat-trend positive">+5%</span>
-            <span class="stat-compare">较昨日</span>
-          </div>
         </div>
       </div>
 
@@ -98,36 +84,12 @@
         </div>
       </div>
 
-      <!-- 快捷操作 -->
-      <div class="quick-actions">
-        <h3 class="section-title">快捷操作</h3>
-        <div class="actions-grid">
-          <button class="action-card" disabled>
-            <div class="action-icon">
-              <el-icon><Document /></el-icon>
-            </div>
-            <span class="action-label">查看日志</span>
-          </button>
-          <button class="action-card" disabled>
-            <div class="action-icon">
-              <el-icon><WarningFilled /></el-icon>
-            </div>
-            <span class="action-label">处理告警</span>
-          </button>
-          <button class="action-card" @click="refreshData">
-            <div class="action-icon primary">
-              <el-icon><Refresh /></el-icon>
-            </div>
-            <span class="action-label">刷新数据</span>
-          </button>
-        </div>
-      </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch, onUnmounted } from 'vue'
 import { debounce } from 'lodash-es'
 import api from '../api'
 import { getAlertStats } from '../api/stats'
@@ -139,9 +101,6 @@ import {
   TrendCharts,
   Warning,
   User,
-  Document,
-  WarningFilled,
-  Refresh
 } from '@element-plus/icons-vue'
 
 const stats = reactive({
@@ -157,12 +116,15 @@ const severityDist = ref([])
 const timeRange = ref('week')
 const loading = ref(false)
 const error = ref(false)
+const retryCooldown = ref(false)
+let retryTimer = null
 
 const formatNumber = (num) => {
   return num.toLocaleString('zh-CN')
 }
 
 const refreshData = async () => {
+  if (retryCooldown.value) return
   loading.value = true
   error.value = false
   try {
@@ -181,6 +143,11 @@ const refreshData = async () => {
   } catch (err) {
     console.error('Failed to load stats:', err)
     error.value = true
+    retryCooldown.value = true
+    clearTimeout(retryTimer)
+    retryTimer = setTimeout(() => {
+      retryCooldown.value = false
+    }, 5000)
   } finally {
     loading.value = false
   }
@@ -190,6 +157,11 @@ const debouncedRefresh = debounce(refreshData, 300)
 
 onMounted(() => {
   refreshData()
+})
+
+onUnmounted(() => {
+  clearTimeout(retryTimer)
+  retryTimer = null
 })
 
 watch(timeRange, () => {
@@ -375,52 +347,6 @@ watch(timeRange, () => {
   gap: 16px;
 }
 
-.action-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 24px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-card:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.action-card:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background-color: var(--color-border-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: var(--color-text-secondary);
-}
-
-.action-icon.primary {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.action-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
-
 @media (max-width: 1024px) {
   .alert-charts-grid {
     grid-template-columns: 1fr;
@@ -433,10 +359,6 @@ watch(timeRange, () => {
 
 @media (max-width: 768px) {
   .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .actions-grid {
     grid-template-columns: 1fr;
   }
 }

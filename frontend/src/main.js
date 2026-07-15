@@ -13,4 +13,12 @@ app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 
+app.config.errorHandler = (err) => {
+  console.error('[Global Error]', err)
+}
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Unhandled Promise]', event.reason)
+})
+
 app.mount('#app')
