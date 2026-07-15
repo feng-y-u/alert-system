@@ -106,24 +106,30 @@ severity(low/medium/high), status(pending/acknowledged/resolved), created_at, up
 backend/
 ├── app/
 │   ├── api/           # API 路由（每个功能一个文件）
-│   ├── core/          # 配置 + 数据库 + 安全 + 依赖注入
+│   ├── core/          # 配置 + 数据库 + 安全 + 依赖注入 + Redis
 │   ├── models/        # SQLAlchemy ORM 模型
 │   ├── schemas/       # Pydantic 请求/响应模式
 │   ├── services/      # 业务逻辑
-│   └── tasks/         # Celery 异步任务
+│   └── tasks/         # Celery 异步任务（检测、邮件）
 ├── alembic/           # 数据库迁移
-├── tests/             # pytest 测试
+├── tests/             # pytest 测试（42 个）
 ├── scripts/           # 工具脚本（如 seed.py）
+├── docker-entrypoint.sh
+├── Dockerfile
 └── requirements.txt
 frontend/
 ├── src/
-│   ├── api/           # Axios 客户端
+│   ├── api/           # Axios 客户端 + 拦截器
+│   ├── composables/   # 可复用逻辑（在线检测、重试）
+│   ├── components/    # 图表、通用、告警、日志组件
 │   ├── layouts/       # 布局组件
 │   ├── router/        # 路由配置
-│   ├── stores/        # Pinia 状态管理
-│   ├── views/         # 页面视图
-│   └── components/    # Vue 组件
-└── ...
+│   ├── stores/        # Pinia 状态管理（认证、通知/SSE）
+│   └── views/         # 页面视图
+├── nginx.conf         # 生产 Nginx 配置
+├── Dockerfile         # 多阶段构建
+└── package.json
+docker-compose.yml     # 全栈编排（6 服务）
 ```
 
 

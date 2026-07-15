@@ -7,8 +7,8 @@ OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑�
 - **Redis 主机端口是 8880**，不是 6379。`docker-compose.yml` 把容器 6379 映射到主机 8880。Docker 未启动时 Celery/缓存会失败。
 - **API 前缀是 `/api`，不是 `/api/v1`** — 配置变量名叫 `API_V1_PREFIX` 但值是 `"/api"`。新增路由统一用 `prefix=settings.API_V1_PREFIX`。
 - 后端 dev port **8001**，前端 Vite port **5173**，Vite 代理 `/api → http://localhost:8001`。
-- Docker Compose 服务：MySQL `localhost:8881`（user `campus_user` / pass `campus123`，db `campus_monitor`，原 3306 因 Hyper-V 端口冲突改 8881），Redis `localhost:8880`。
-- Backend `Dockerfile` 暴露 **8000**（非 8001），dev 与容器端口不一致。
+- Docker 生产部署：前端 port **80**（Nginx），后端容器内 port **8000**（映射到主机可自定义）。
+- Docker Compose 服务（完整 6 服务已编排）：MySQL `localhost:8881`、Redis `localhost:8880`、Backend 8000、Frontend 80、Celery Worker、Celery Beat。
 - 没有 CI、pre-commit、`opencode.json`。
 
 ## 添加新功能的强制步骤（易漏）
@@ -16,15 +16,17 @@ OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑�
 1. 新模型必须在 `backend/app/models/__init__.py` 显式 import，否则 Alembic autogenerate 与 `Base.metadata` 漏表。当前注册：`User`、`LoginLog`、`Alert`。
 2. 新路由文件需在 `backend/app/main.py` 手动 `import` 并 `app.include_router(..., prefix=settings.API_V1_PREFIX, tags=[...])` —— 没有自动扫描。
 3. Schema 的 `response_model` 类需 `model_config = ConfigDict(from_attributes=True)`，否则从 ORM 返回会报错。当前 `schemas/{user,alert,login_log}.py` 均是这种写法，照抄。
-4. 建表用 `alembic upgrade head`，不要用 `Base.metadata.create_all()` 跑生产/开发库；autogenerate 用 `alembic revision --autogenerate -m "..."`。注意 `alembic.ini` 里硬编码了一份 `sqlalchemy.url`，与 `.env`/`config.py` 的 `DATABASE_URL` 是两处来源，改 DB 连接时两处都要改。
+4. 建表用 `alembic upgrade head`，不要用 `Base.metadata.create_all()` 跑生产/开发库；autogenerate 用 `alembic revision --autogenerate -m "..."`。注意 `alembic.ini` 里硬编码了一份 `sqlalchemy.url`，与 `.env`/`config.py` 的 `DATABASE_URL` 是两处来源，改 DB 连接时两处都要改。Docker 部署时 `alembic/env.py` 会从 `settings.DATABASE_URL` 覆盖连接串。已更新 `env.py` 导入 `settings` 并使用 `config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)`。
 5. 创建默认管理员：`cd backend && python scripts/seed.py`（账号 `admin` / `admin123`）。
 
 ## 测试约定
 
-- 测试在 `backend/tests/`，`conftest.py` 提供 `client` 和 `db` 两个 fixture。
-- `db` fixture 用**内存 SQLite**（`sqlite://` + `create_all`），不依赖 MySQL —— 但 `client` fixture 挂真实 `app`，**会走 `backend/.env` 的 MySQL**。需要 Docker MySQL 在跑，否则依赖 DB 的接口测试会失败。隔离的纯单元测试优先用 `db` fixture，注意 `db` 不会自动注入到 `app` 的依赖里（conftest 没覆盖 `get_db`）。
-- 跑单个测试：`pytest tests/test_xxx.py -k test_name`（工作目录为 `backend/`）。
-- 当前测试文件：`test_health.py`、`test_security.py`、`test_detection.py`。
+- 测试在 `backend/tests/`，`conftest.py` 提供 `engine`、`client`、`db` 三个 fixture。
+- `engine` fixture 用**临时文件 SQLite**（自动创建 + 测试后清理），`client` 通过 `app.dependency_overrides[get_db]` 注入同一引擎，HTTP 请求与 `db` fixture 共享同一数据库。不需要 Docker MySQL。
+- 跑单个测试：`pytest tests/test_xxx.py::TestClass::test_method -v`（工作目录为 `backend/`）。
+- 当前测试文件：`test_health.py`、`test_security.py`、`test_detection.py`、`test_alert_stats.py`、`test_integration.py`（共 42 个测试）。
+- 集成测试（`test_integration.py`）覆盖：认证→日志写入→异常检测→告警 API→统计→SSE 发布→去重。Celery `delay()` 通过 `mock.patch` 跳过（测试环境无 Redis）。
+- 全部测试可离线运行，不依赖 MySQL/Redis。
 
 ## Lint / 格式化（注意 config 残缺，别盲信文档）
 
@@ -39,8 +41,19 @@ OpenCode 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑�
 - `backend/.env` 已被 `.gitignore` 忽略，`backend/.env.example` 是其模板。注意 `backend/.env.example` 写了 `ACCESS_TOKEN_EXPIRE_MINUTES=30`，而 `config.py` 默认是 `1440`（=24h）。如果复制 `.env.example` → `.env`，token 有效期会从 24h 变成 30min。
 - **`API_KEY` 不在 `backend/.env.example`**，默认值在 `config.py`：`"dev-api-key-change-in-production"`。`API_KEY` 已在 `app/core/deps.py` 实际用于 `X-API-Key` 头校验。要覆盖就把大写 key 加到 `backend/.env`。
 - `SECRET_KEY` 与 `API_KEY` 为 dev 占位值，生产必须改。邮件告警走 `EMAIL_*` + `ALERT_EMAIL_FROM`（默认 `campus-monitor@localhost`）；`app/tasks/email.py` 的 `is_email_configured()` 在 `EMAIL_USER` 为空或 host 含 `example` 时返回 False，`send_alert_email` 任务优雅跳过（记 warning，不抛错），不影响告警生成主流程。告警在检测生成后通过 `send_alert_email.delay(alert_id)` 异步触发（见 `app/tasks/detection.py` 两处检测任务）。填真实 SMTP 凭据到 `backend/.env` 即启用，无需改代码。
+- **163 邮箱 SMTP 需用端口 465 + SSL**（`email.py` 中 `smtplib.SMTP_SSL`），端口 587 + STARTTLS 实测连接失败。`.env` 默认端口已改为 465。
 
 ## 启动顺序
+
+### Docker 一键部署（推荐）
+
+```bash
+docker-compose up -d    # MySQL + Redis + Backend + Frontend + Celery Worker + Celery Beat
+```
+
+访问 http://localhost，管理员 admin / admin123。首次自动 migration + seed。
+
+### 本地开发
 
 ```bash
 docker-compose up -d                     # 1. MySQL + Redis（必需）
