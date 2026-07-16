@@ -50,11 +50,11 @@ services:
       SECRET_KEY: change-me-to-a-random-secret-in-production
       API_KEY: change-me-to-a-random-api-key-in-production
       ACCESS_TOKEN_EXPIRE_MINUTES: 1440
-      ALERT_EMAIL_FROM: EMAIL_REMOVED
-      EMAIL_HOST: smtp.163.com
+      ALERT_EMAIL_FROM: your-email@example.com
+      EMAIL_HOST: smtp.example.com
       EMAIL_PORT: 465
-      EMAIL_USER: EMAIL_REMOVED
-      EMAIL_PASSWORD: PASSWORD_REMOVED
+      EMAIL_USER: your-email@example.com
+      EMAIL_PASSWORD: change-me-to-a-smtp-password
     ports:
       - "8000:8000"
     volumes:
@@ -77,11 +77,11 @@ services:
       SECRET_KEY: change-me-to-a-random-secret-in-production
       API_KEY: change-me-to-a-random-api-key-in-production
       ACCESS_TOKEN_EXPIRE_MINUTES: 1440
-      ALERT_EMAIL_FROM: EMAIL_REMOVED
-      EMAIL_HOST: smtp.163.com
+      ALERT_EMAIL_FROM: your-email@example.com
+      EMAIL_HOST: smtp.example.com
       EMAIL_PORT: 465
-      EMAIL_USER: EMAIL_REMOVED
-      EMAIL_PASSWORD: PASSWORD_REMOVED
+      EMAIL_USER: your-email@example.com
+      EMAIL_PASSWORD: change-me-to-a-smtp-password
     volumes:
       - ./backend/alembic/versions:/app/alembic/versions
     command: celery -A app.tasks worker --loglevel=info
@@ -102,11 +102,11 @@ services:
       SECRET_KEY: change-me-to-a-random-secret-in-production
       API_KEY: change-me-to-a-random-api-key-in-production
       ACCESS_TOKEN_EXPIRE_MINUTES: 1440
-      ALERT_EMAIL_FROM: EMAIL_REMOVED
-      EMAIL_HOST: smtp.163.com
+      ALERT_EMAIL_FROM: your-email@example.com
+      EMAIL_HOST: smtp.example.com
       EMAIL_PORT: 465
-      EMAIL_USER: EMAIL_REMOVED
-      EMAIL_PASSWORD: PASSWORD_REMOVED
+      EMAIL_USER: your-email@example.com
+      EMAIL_PASSWORD: change-me-to-a-smtp-password
     volumes:
       - ./backend/alembic/versions:/app/alembic/versions
     command: celery -A app.tasks beat --loglevel=info
