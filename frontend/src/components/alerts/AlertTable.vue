@@ -82,6 +82,7 @@
 <script setup>
 import { MoreFilled } from '@element-plus/icons-vue'
 import StatusTag from '../common/StatusTag.vue'
+import { formatDateTime } from '../../utils/format'
 
 defineProps({
   alerts: {
@@ -91,18 +92,6 @@ defineProps({
 })
 
 const emit = defineEmits(['status-change'])
-
-const formatDateTime = (isoString) => {
-  if (!isoString) return '-'
-  const date = new Date(isoString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).replace(/\//g, '-')
-}
 </script>
 
 <style scoped>

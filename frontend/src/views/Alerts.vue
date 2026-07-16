@@ -2,6 +2,26 @@
   <div class="alerts-page">
     <AlertFilter @search="handleSearch" @reset="handleReset" />
 
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="total-label">共 {{ total }} 条告警</span>
+      </div>
+      <div class="toolbar-right">
+        <el-dropdown trigger="click" @command="handleClear">
+          <el-button type="danger" plain :disabled="total === 0">
+            <el-icon :size="16"><Delete /></el-icon>
+            清空
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="all">清空全部</el-dropdown-item>
+              <el-dropdown-item command="processed">清空已处理</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </div>
+
     <div class="table-card" v-loading="loading">
       <div v-if="error" class="error-placeholder">
         <p>数据加载失败，请稍后重试</p>
@@ -29,11 +49,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Delete } from '@element-plus/icons-vue'
 import AlertFilter from '../components/alerts/AlertFilter.vue'
 import AlertTable from '../components/alerts/AlertTable.vue'
 import AlertPagination from '../components/alerts/AlertPagination.vue'
-import { getAlerts, updateAlertStatus } from '../api/alerts'
+import { getAlerts, updateAlertStatus, clearAlerts } from '../api/alerts'
 import { useNotificationStore } from '../stores/notification'
 
 const notificationStore = useNotificationStore()
@@ -102,6 +123,23 @@ const handleStatusChange = async (alertId, newStatus) => {
   }
 }
 
+const handleClear = async (scope) => {
+  const label = scope === 'all' ? '全部' : '已处理'
+  try {
+    await ElMessageBox.confirm(
+      `确定清空${label}告警？此操作不可恢复。`,
+      '确认清空',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+    const res = await clearAlerts(scope)
+    ElMessage.success(`已清空 ${res.deleted} 条${label}告警`)
+    skip.value = 0
+    fetchAlerts()
+  } catch {
+    // 取消或失败都不处理
+  }
+}
+
 onMounted(() => {
   fetchAlerts()
   notificationStore.clearUnread()
@@ -128,6 +166,18 @@ onUnmounted(() => {
 
 .table-card :deep(.el-empty__description p) {
   color: #9CA3AF;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.total-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
 }
 
 .error-placeholder {

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -78,3 +78,19 @@ def update_alert(
     db.commit()
     db.refresh(alert)
     return alert
+
+
+@router.delete("/alerts")
+def clear_alerts(
+    scope: Literal["all", "processed"] = Query(..., description="'all' 清空全部, 'processed' 清空已处理"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """清空告警"""
+    query = db.query(Alert)
+    if scope == "processed":
+        query = query.filter(Alert.status.in_(["acknowledged", "resolved"]))
+
+    count = query.delete(synchronize_session=False)
+    db.commit()
+    return {"deleted": count, "scope": scope}

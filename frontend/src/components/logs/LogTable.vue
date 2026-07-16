@@ -20,7 +20,11 @@
   >
     <el-table-column prop="id" label="ID" min-width="60" />
     <el-table-column prop="username" label="用户名" min-width="90" />
-    <el-table-column prop="login_time" label="登录时间" min-width="150" />
+    <el-table-column label="登录时间" min-width="150">
+      <template #default="{ row }">
+        {{ formatDateTime(row.login_time) }}
+      </template>
+    </el-table-column>
     <el-table-column prop="ip_address" label="IP地址" min-width="120" />
     <el-table-column prop="login_status" label="状态" min-width="70" align="center">
       <template #default="{ row }">
@@ -46,6 +50,7 @@
 
 <script setup>
 import StatusTag from '../common/StatusTag.vue'
+import { formatDateTime } from '../../utils/format'
 
 defineProps({
   logs: {
@@ -53,18 +58,6 @@ defineProps({
     required: true
   }
 })
-
-const formatDateTime = (isoString) => {
-  if (!isoString) return '-'
-  const date = new Date(isoString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).replace(/\//g, '-')
-}
 </script>
 
 <style scoped>

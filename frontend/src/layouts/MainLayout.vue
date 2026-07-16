@@ -29,6 +29,10 @@
             />
           </span>
         </router-link>
+        <router-link to="/settings" :class="['nav-item']">
+          <el-icon :size="20"><Setting /></el-icon>
+          <span v-if="!isCollapse" class="nav-label">系统设置</span>
+        </router-link>
       </nav>
     </aside>
 
@@ -87,7 +91,8 @@ import {
   ArrowDown,
   Expand,
   Fold,
-  SwitchButton
+  SwitchButton,
+  Setting
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -105,6 +110,7 @@ const pageTitle = computed(() => {
     '/': '仪表盘',
     '/login-logs': '登录日志',
     '/alerts': '告警列表',
+    '/settings': '系统设置',
   }
   return titles[route.path] || '仪表盘'
 })

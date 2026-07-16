@@ -8,6 +8,7 @@ from app.api.stats import router as stats_router
 from app.api.logs import router as logs_router
 from app.api.alerts import router as alerts_router
 from app.api.notifications import router as notifications_router
+from app.api.settings import router as settings_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -31,3 +32,4 @@ app.include_router(stats_router, prefix=settings.API_V1_PREFIX, tags=["统计"])
 app.include_router(logs_router, prefix=settings.API_V1_PREFIX, tags=["日志"])
 app.include_router(alerts_router, prefix=settings.API_V1_PREFIX, tags=["告警"])
 app.include_router(notifications_router, prefix=settings.API_V1_PREFIX, tags=["实时通知"])
+app.include_router(settings_router, prefix=settings.API_V1_PREFIX, tags=["设置"])

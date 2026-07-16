@@ -2,6 +2,18 @@
   <div class="login-logs-page">
     <LogFilter @search="handleSearch" @reset="handleReset" />
 
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="total-label">共 {{ total }} 条日志</span>
+      </div>
+      <div class="toolbar-right">
+        <el-button type="danger" plain :disabled="total === 0" @click="handleClear">
+          <el-icon :size="16"><Delete /></el-icon>
+          清空
+        </el-button>
+      </div>
+    </div>
+
     <div class="table-card" v-loading="loading">
       <div v-if="error" class="error-placeholder">
         <p>数据加载失败，请稍后重试</p>
@@ -25,10 +37,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Delete } from '@element-plus/icons-vue'
 import LogFilter from '../components/logs/LogFilter.vue'
 import LogTable from '../components/logs/LogTable.vue'
 import LogPagination from '../components/logs/LogPagination.vue'
-import { getLogs } from '../api/logs'
+import { getLogs, clearLogs } from '../api/logs'
 
 const logs = ref([])
 const total = ref(0)
@@ -83,6 +97,22 @@ const handlePageChange = (newSkip, newLimit) => {
   fetchLogs()
 }
 
+const handleClear = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定清空所有登录日志？此操作不可恢复。',
+      '确认清空',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+    const res = await clearLogs()
+    ElMessage.success(`已清空 ${res.deleted} 条日志`)
+    skip.value = 0
+    fetchLogs()
+  } catch {
+    // 取消或失败都不处理
+  }
+}
+
 onMounted(fetchLogs)
 
 onUnmounted(() => {
@@ -94,6 +124,18 @@ onUnmounted(() => {
 <style scoped>
 .login-logs-page {
   padding: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.total-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
 }
 
 .table-card {

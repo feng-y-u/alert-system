@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园系统模拟器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui; background: #f3f4f6; display: flex; justify-content: center; padding: 40px 16px; }
+    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 24px; }
+    .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    h1 { font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 20px; }
+    .section-label { font-size: 12px; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+    input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; }
+    input:focus { border-color: #111827; box-shadow: 0 0 0 3px rgba(17,24,39,0.1); }
+    .btn { width: 100%; height: 40px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #111827; color: white; }
+    .btn-primary:hover { background: #374151; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; color: #374151; border: 1px solid #e5e7eb; }
+    .btn-outline:hover { background: #f9fafb; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error-msg { color: #ef4444; font-size: 14px; margin-top: 8px; }
+    .btn + .btn { margin-top: 8px; }
+    .log-area { background: #111827; color: #22c55e; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; padding: 16px; border-radius: 8px; height: 160px; overflow-y: auto; line-height: 1.6; }
+    .log-area .dim { color: #6b7280; }
+    .account-info { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 4px; }
+    .account-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .acct-label { color: #9ca3af; font-weight: 500; min-width: 5em; }
+    .acct-value { color: #374151; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+    .separator { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+    .inline-flex { display: flex; gap: 8px; }
+    .inline-flex .btn { flex: 1; margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>校园系统模拟器</h1>
+      <form method="POST" action="/" onsubmit="syncConfig()">
+        <input type="hidden" name="platform_url" id="hf-url" value="http://localhost:8000">
+        <input type="hidden" name="api_key" id="hf-key" value="change-me-to-a-random-api-key-in-production">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input id="username" name="username" placeholder="输入用户名" required>
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input id="password" name="password" type="password" placeholder="输入密码" required>
+        </div>
+        {% if error %}
+          <div class="error-msg">{{ error }}</div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">登录</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="section-label">演示</div>
+      <div class="inline-flex">
+        <button class="btn btn-danger" onclick="simulate('frequency')" id="btn-freq">模拟频率异常 ×10</button>
+        <button class="btn btn-danger" onclick="simulate('device')" id="btn-device">模拟设备异常</button>
+      </div>
+      <div class="account-info">
+        <div class="account-row"><span class="acct-label">学生账号</span><span class="acct-value">zhangsan / lisi / wangwu / zhaoliu</span></div>
+        <div class="account-row"><span class="acct-label">统一密码</span><span class="acct-value">123456</span></div>
+        <div class="account-row"><span class="acct-label">管理员</span><span class="acct-value">admin / admin123</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">配置</div>
+      <div class="form-group">
+        <label for="platform-url">平台地址</label>
+        <input id="platform-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+      </div>
+      <div class="form-group">
+        <label for="api-key">API Key</label>
+        <input id="api-key" value="change-me-to-a-random-api-key-in-production" placeholder="API Key">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">日志</div>
+      <div class="log-area" id="log-area">> 就绪</div>
+    </div>
+  </div>
+
+  <script>
+    function log(msg, dim) {
+      const el = document.getElementById('log-area');
+      const line = document.createElement('div');
+      line.textContent = '> ' + new Date().toLocaleTimeString() + ' ' + msg;
+      if (dim) line.className = 'dim';
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function syncConfig() {
+      document.getElementById('hf-url').value = document.getElementById('platform-url').value;
+      document.getElementById('hf-key').value = document.getElementById('api-key').value;
+    }
+
+    function getConfig() {
+      return {
+        platform_url: document.getElementById('platform-url').value || 'http://localhost:8000',
+        api_key: document.getElementById('api-key').value || 'change-me-to-a-random-api-key-in-production',
+      };
+    }
+
+    async function simulate(type) {
+      const btn = document.getElementById(type === 'frequency' ? 'btn-freq' : 'btn-device');
+      btn.disabled = true;
+      log(type === 'frequency' ? '开始模拟频率异常...' : '开始模拟设备异常...');
+
+      try {
+        const resp = await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, ...getConfig() }),
+        });
+        const result = await resp.json();
+        result.logs.forEach(l => log(l.msg, l.dim));
+      } catch (err) {
+        log('请求失败: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_active_user, verify_api_key
+from app.models.login_log import LoginLog
 from app.models.user import User
 from app.schemas.login_log import LoginLogCreate, LoginLogResponse
 from app.schemas.logs_query import LogQueryParams, LogListResponse
@@ -44,3 +45,14 @@ def list_logs(
         "skip": params.skip,
         "limit": params.limit,
     }
+
+
+@router.delete("/logs")
+def clear_logs(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """清空所有登录日志"""
+    count = db.query(LoginLog).delete()
+    db.commit()
+    return {"deleted": count}
