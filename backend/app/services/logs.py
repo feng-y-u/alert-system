@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.models.login_log import LoginLog
 from app.schemas.login_log import LoginLogCreate
-from app.tasks.detection import detect_anomaly_for_log
 
 
 def build_log_query(
@@ -54,7 +53,8 @@ def create_log(db: Session, log_data: LoginLogCreate) -> LoginLog:
     db.commit()
     db.refresh(log)
 
-    # 触发异步异常检测
+    # 触发异步异常检测（延迟导入避免循环引用）
+    from app.tasks.detection import detect_anomaly_for_log
     detect_anomaly_for_log.delay(log.id)
 
     return log
