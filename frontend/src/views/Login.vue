@@ -1,93 +1,121 @@
 <template>
-  <div class="login-page">
-    <div class="login-wrapper">
-      <!-- 左侧品牌区 -->
-      <div class="brand-section">
-        <div class="brand-content">
-          <div class="logo">
-            <div class="logo-icon">TF</div>
-            <span class="logo-text">校园监测平台</span>
-          </div>
-          <h1 class="brand-title">安全审计与日志分析系统</h1>
-          <p class="brand-desc">
-            监测校园系统的登录行为，检测异常登录并发送告警，保障校园账号安全。
-          </p>
-          <div class="brand-features">
-            <div class="feature-item">
-              <el-icon><Check /></el-icon>
-              <span>实时登录监控</span>
-            </div>
-            <div class="feature-item">
-              <el-icon><Check /></el-icon>
-              <span>异常行为检测</span>
-            </div>
-            <div class="feature-item">
-              <el-icon><Check /></el-icon>
-              <span>智能告警通知</span>
-            </div>
-          </div>
+  <div class="login">
+    <!-- 左侧品牌区（浅色渐变） -->
+    <section class="login__brand">
+      <div class="brand-deco brand-deco--a" />
+      <div class="brand-deco brand-deco--b" />
+      <div class="brand-grid" />
+
+      <div class="brand-inner">
+        <div class="brand-logo">
+          <span class="brand-logo__mark">
+            <el-icon :size="19"><Lock /></el-icon>
+          </span>
+          <span class="brand-logo__name">校园监测平台</span>
         </div>
+
+        <h1 class="brand-title">
+          守护每一次<br />
+          校园账号登录
+        </h1>
+        <p class="brand-desc">
+          实时采集校园系统登录日志，自动识别异常行为，第一时间把告警送到管理员手中。
+        </p>
+
+        <ul class="brand-list">
+          <li v-for="f in features" :key="f">
+            <span class="brand-list__icon">
+              <el-icon :size="12"><Select /></el-icon>
+            </span>
+            {{ f }}
+          </li>
+        </ul>
       </div>
 
-      <!-- 右侧登录表单 -->
-      <div class="form-section">
-        <div class="form-container">
-          <div class="form-header">
-            <h2 class="form-title">欢迎回来</h2>
-            <p class="form-subtitle">请使用管理员账号登录</p>
-          </div>
-
-          <form class="login-form" @submit.prevent="handleLogin">
-            <div class="form-group">
-              <label class="form-label">用户名</label>
-              <div class="input-wrapper">
-                <el-icon class="input-icon"><User /></el-icon>
-                <input
-                  v-model="form.username"
-                  type="text"
-                  placeholder="请输入用户名"
-                  class="form-input"
-                  @keyup.enter="handleLogin"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">密码</label>
-              <div class="input-wrapper">
-                <el-icon class="input-icon"><Lock /></el-icon>
-                <input
-                  v-model="form.password"
-                  type="password"
-                  placeholder="请输入密码"
-                  class="form-input"
-                  @keyup.enter="handleLogin"
-                />
-              </div>
-            </div>
-
-            <div v-if="error" class="error-message">
-              <el-icon><Warning /></el-icon>
-              <span>{{ error }}</span>
-            </div>
-
-            <button
-              type="submit"
-              class="submit-btn"
-              :disabled="loading"
-              :class="{ loading: loading }"
-            >
-              <span v-if="!loading">登录</span>
-              <span v-else>登录中...</span>
-            </button>
-          </form>
-
-          <div class="form-footer">
-            <p>默认账号: <strong>admin</strong> / <strong>admin123</strong></p>
-          </div>
+      <div class="brand-stats">
+        <div v-for="s in highlights" :key="s.label" class="brand-stat">
+          <span class="brand-stat__value num">{{ s.value }}</span>
+          <span class="brand-stat__label">{{ s.label }}</span>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- 右侧表单区 -->
+    <section class="login__form">
+      <div class="form-card">
+        <div class="form-head">
+          <span class="form-head__mark">
+            <el-icon :size="16"><Lock /></el-icon>
+          </span>
+          <h2 class="form-title">管理员登录</h2>
+          <p class="form-subtitle">请使用管理员账号登录以进入控制台</p>
+        </div>
+
+        <form class="form" @submit.prevent="handleLogin">
+          <div class="field">
+            <label class="field__label" for="username">用户名</label>
+            <div class="field__control">
+              <el-icon class="field__icon"><User /></el-icon>
+              <input
+                id="username"
+                v-model="form.username"
+                class="field__input"
+                type="text"
+                placeholder="请输入用户名"
+                autocomplete="username"
+                :disabled="loading"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="password">密码</label>
+            <div class="field__control">
+              <el-icon class="field__icon"><Lock /></el-icon>
+              <input
+                id="password"
+                v-model="form.password"
+                class="field__input"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="请输入密码"
+                autocomplete="current-password"
+                :disabled="loading"
+              />
+              <button
+                type="button"
+                class="field__suffix"
+                :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+                @click="showPassword = !showPassword"
+              >
+                <el-icon :size="16">
+                  <View v-if="!showPassword" />
+                  <Hide v-else />
+                </el-icon>
+              </button>
+            </div>
+          </div>
+
+          <Transition name="shake">
+            <p v-if="error" class="form-error">
+              <el-icon><WarningFilled /></el-icon>
+              {{ error }}
+            </p>
+          </Transition>
+
+          <button class="submit" type="submit" :disabled="loading">
+            <span v-if="!loading">登 录</span>
+            <span v-else class="submit__loading">
+              <el-icon class="spin"><Loading /></el-icon>
+              正在验证…
+            </span>
+          </button>
+        </form>
+
+        <p class="form-foot">
+          默认账号 <code>admin</code> / <code>admin123</code>
+        </p>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -95,38 +123,47 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { User, Lock, Check, Warning } from '@element-plus/icons-vue'
+import {
+  Hide,
+  Loading,
+  Lock,
+  Select,
+  User,
+  View,
+  WarningFilled,
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const form = reactive({
-  username: '',
-  password: '',
-})
-
+const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 const error = ref('')
+const showPassword = ref(false)
 
-const handleLogin = async () => {
-  if (!form.username || !form.password) {
+const features = ['实时登录监控', '异常行为检测', '多渠道告警通知']
+const highlights = [
+  { value: '5min', label: '频率检测窗口' },
+  { value: '24h', label: '告警去重周期' },
+  { value: 'SSE', label: '实时推送' },
+]
+
+async function handleLogin() {
+  if (!form.username.trim() || !form.password) {
     error.value = '请输入用户名和密码'
     return
   }
 
   loading.value = true
   error.value = ''
-
   try {
-    await authStore.login(form.username, form.password)
+    await authStore.login(form.username.trim(), form.password)
     router.push('/')
   } catch (err) {
     const detail = err.response?.data?.detail
-    if (Array.isArray(detail)) {
-      error.value = detail.map(d => d.msg).join('；')
-    } else {
-      error.value = detail || '登录失败，请检查用户名和密码'
-    }
+    error.value = Array.isArray(detail)
+      ? detail.map((d) => d.msg).join('；')
+      : detail || '登录失败，请检查用户名和密码'
   } finally {
     loading.value = false
   }
@@ -134,256 +171,373 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
+.login {
   display: flex;
-  background-color: var(--color-bg);
+  min-height: 100vh;
+  background: var(--bg-app);
 }
 
-.login-wrapper {
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* === 左侧品牌区 === */
-.brand-section {
-  flex: 1;
-  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
+/* ============ 品牌区（浅色渐变 + 装饰色晕） ============ */
+.login__brand {
+  flex: 1.1;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(150deg, #e8f1ff 0%, #f2f7ff 48%, #eaf6ff 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 56px 64px;
 }
 
-.brand-section::before {
-  content: '';
+.brand-deco {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  opacity: 0.5;
+  border-radius: 50%;
+  filter: blur(2px);
+  pointer-events: none;
 }
 
-.brand-content {
-  max-width: 480px;
-  color: white;
+.brand-deco--a {
+  top: -140px;
+  right: -120px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.14), transparent 68%);
+}
+
+.brand-deco--b {
+  bottom: -160px;
+  left: -120px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12), transparent 68%);
+}
+
+/* 网格底纹 */
+.brand-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      to right,
+      rgba(37, 99, 235, 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(37, 99, 235, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(80% 60% at 30% 30%, #000 0%, transparent 100%);
+}
+
+.brand-inner {
   position: relative;
-  z-index: 1;
+  max-width: 520px;
 }
 
-.logo {
+.brand-logo {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 48px;
+  margin-bottom: 56px;
 }
 
-.logo-icon {
-  width: 44px;
-  height: 44px;
-  background: white;
+.brand-logo__mark {
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #111827;
-  font-weight: 700;
-  font-size: 16px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
 }
 
-.logo-text {
-  font-size: 20px;
+.brand-logo__name {
+  font-size: 18px;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-strong);
 }
 
 .brand-title {
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 16px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-bottom: 18px;
+  color: var(--text-strong);
 }
 
 .brand-desc {
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 48px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  margin-bottom: 36px;
 }
 
-.brand-features {
+.brand-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-.feature-item {
+.brand-list li {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  color: var(--text-body);
 }
 
-.feature-item .el-icon {
-  width: 24px;
-  height: 24px;
-  background: rgba(16, 185, 129, 0.2);
-  border-radius: 6px;
+.brand-list__icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--brand-600);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #10b981;
-  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
 }
 
-/* === 右侧表单区 === */
-.form-section {
+.brand-stats {
+  position: relative;
+  display: flex;
+  gap: 40px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.brand-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-stat__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-700);
+}
+
+.brand-stat__label {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ============ 表单区 ============ */
+.login__form {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px;
+  padding: 48px 32px;
+  background: var(--bg-surface);
 }
 
-.form-container {
+.form-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 392px;
 }
 
-.form-header {
-  margin-bottom: 32px;
+.form-head {
+  margin-bottom: 28px;
+}
+
+.form-head__mark {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
 }
 
 .form-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 8px;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
 }
 
 .form-subtitle {
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: var(--text-muted);
 }
 
-.login-form {
+.form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-.form-group {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
-.form-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+.field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-body);
 }
 
-.input-wrapper {
+.field__control {
   position: relative;
-}
-
-.input-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-tertiary);
-  font-size: 18px;
-}
-
-.form-input {
-  width: 100%;
-  height: 48px;
-  padding: 0 16px 0 44px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 14px;
-  color: var(--color-text-primary);
-  background: var(--color-bg-elevated);
-  transition: all 0.2s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1);
-}
-
-.form-input::placeholder {
-  color: var(--color-text-tertiary);
-}
-
-.error-message {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background-color: var(--color-danger-light);
-  border-radius: 8px;
-  color: var(--color-danger);
-  font-size: 13px;
 }
 
-.error-message .el-icon {
+.field__icon {
+  position: absolute;
+  left: 13px;
+  color: var(--text-faint);
   font-size: 16px;
-  flex-shrink: 0;
+  pointer-events: none;
 }
 
-.submit-btn {
-  height: 48px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 8px;
+.field__input {
+  width: 100%;
+  height: 46px;
+  padding: 0 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  font-size: 14px;
+  color: var(--text-strong);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 
-.submit-btn:hover:not(:disabled) {
-  background: var(--color-primary-light);
+.field__input::placeholder {
+  color: var(--text-faint);
 }
 
-.submit-btn:disabled {
-  opacity: 0.7;
+.field__input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px var(--brand-100);
+}
+
+.field__input:disabled {
+  background: var(--bg-subtle);
   cursor: not-allowed;
 }
 
-.form-footer {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--color-border);
-  text-align: center;
+.field__suffix {
+  position: absolute;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--dur) var(--ease);
+}
+
+.field__suffix:hover {
+  background: var(--bg-hover);
+  color: var(--text-body);
+}
+
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 13px;
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger-ink);
   font-size: 13px;
-  color: var(--color-text-secondary);
 }
 
-.form-footer strong {
-  color: var(--color-text-primary);
+.submit {
+  height: 46px;
+  margin-top: 4px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-600));
+  color: #fff;
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
 }
 
-/* === 响应式 === */
+.submit:hover:not(:disabled) {
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.38);
+  transform: translateY(-1px);
+}
+
+.submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.submit__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.form-foot {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.form-foot code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--text-body);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.shake-enter-active {
+  animation: shake 0.35s var(--ease);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
 @media (max-width: 1024px) {
-  .brand-section {
+  .login__brand {
     display: none;
   }
 
-  .form-section {
-    padding: 24px;
+  .form-head__mark {
+    display: flex;
+  }
+
+  .login__form {
+    padding: 32px 20px;
+    background: var(--bg-app);
   }
 }
 </style>

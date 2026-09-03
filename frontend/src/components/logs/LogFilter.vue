@@ -1,48 +1,41 @@
 <template>
-  <div class="filter-card">
-    <div class="filter-row">
-      <el-input
-        v-model="filters.username"
-        placeholder="用户名"
-        clearable
-        class="filter-item"
-      />
-      <el-input
-        v-model="filters.ip_address"
-        placeholder="IP地址"
-        clearable
-        class="filter-item"
-      />
-      <el-select
-        v-model="filters.login_status"
-        placeholder="登录状态"
-        clearable
-        class="filter-item filter-select"
-      >
-        <el-option label="成功" value="success" />
-        <el-option label="失败" value="failure" />
-      </el-select>
-      <el-date-picker
-        v-model="filters.dateRange"
-        type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        value-format="YYYY-MM-DD"
-        class="filter-item filter-date"
-      />
-      <el-button type="primary" @click="handleSearch">
-        <el-icon><Search /></el-icon>
-        查询
-      </el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
-  </div>
+  <FilterBar @search="handleSearch" @reset="handleReset">
+    <el-input
+      v-model="filters.username"
+      placeholder="用户名"
+      clearable
+      class="filter-field"
+    />
+    <el-input
+      v-model="filters.ip_address"
+      placeholder="IP 地址"
+      clearable
+      class="filter-field"
+    />
+    <el-select
+      v-model="filters.login_status"
+      placeholder="登录状态"
+      clearable
+      class="filter-field filter-field--narrow"
+    >
+      <el-option label="成功" value="success" />
+      <el-option label="失败" value="failure" />
+    </el-select>
+    <el-date-picker
+      v-model="filters.dateRange"
+      type="daterange"
+      range-separator="至"
+      start-placeholder="开始日期"
+      end-placeholder="结束日期"
+      value-format="YYYY-MM-DD"
+      class="filter-field filter-field--wide"
+    />
+  </FilterBar>
 </template>
 
 <script setup>
 import { reactive } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import FilterBar from '../common/FilterBar.vue'
 
 const emit = defineEmits(['search', 'reset'])
 
@@ -50,21 +43,25 @@ const filters = reactive({
   username: '',
   ip_address: '',
   login_status: '',
-  dateRange: null
+  dateRange: null,
 })
 
-const handleSearch = () => {
-  const params = {
+function handleSearch() {
+  emit('search', {
     username: filters.username || undefined,
     ip_address: filters.ip_address || undefined,
     login_status: filters.login_status || undefined,
-    start_time: filters.dateRange?.[0] ? `${filters.dateRange[0]}T00:00:00` : undefined,
-    end_time: filters.dateRange?.[1] ? `${filters.dateRange[1]}T23:59:59` : undefined
-  }
-  emit('search', params)
+    // 后端接收的是完整时间戳，日期需补齐起止时刻
+    start_time: filters.dateRange?.[0]
+      ? `${filters.dateRange[0]}T00:00:00`
+      : undefined,
+    end_time: filters.dateRange?.[1]
+      ? `${filters.dateRange[1]}T23:59:59`
+      : undefined,
+  })
 }
 
-const handleReset = () => {
+function handleReset() {
   filters.username = ''
   filters.ip_address = ''
   filters.login_status = ''
@@ -72,37 +69,3 @@ const handleReset = () => {
   emit('reset')
 }
 </script>
-
-<style scoped>
-.filter-card {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
-.filter-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.filter-item {
-  width: 160px;
-}
-
-.filter-select {
-  width: 140px;
-}
-
-.filter-date {
-  width: 280px;
-}
-
-/* 覆盖日期选择器圆角与按钮一致 */
-.filter-date :deep(.el-input__wrapper) {
-  border-radius: 8px;
-}
-</style>

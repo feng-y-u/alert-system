@@ -7,13 +7,13 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api/notifications': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         ws: false,
         headers: { 'Connection': 'keep-alive' },
       },
       '/api': {
-        target: 'http://localhost:8001',
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },

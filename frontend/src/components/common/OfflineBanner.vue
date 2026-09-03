@@ -1,10 +1,10 @@
 <template>
   <Transition name="banner">
-    <div v-if="!isOnline" class="offline-banner">
+    <div v-if="!isOnline" class="net-banner net-banner--offline">
       <el-icon><WarningFilled /></el-icon>
       <span>网络连接已断开，部分功能不可用</span>
     </div>
-    <div v-else-if="showReconnected" class="online-banner">
+    <div v-else-if="showReconnected" class="net-banner net-banner--online">
       <el-icon><CircleCheckFilled /></el-icon>
       <span>网络已恢复</span>
     </div>
@@ -13,7 +13,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { WarningFilled, CircleCheckFilled } from '@element-plus/icons-vue'
+import { CircleCheckFilled, WarningFilled } from '@element-plus/icons-vue'
 
 const props = defineProps({
   isOnline: { type: Boolean, required: true },
@@ -33,12 +33,12 @@ watch(
         showReconnected.value = false
       }, 3000)
     }
-  }
+  },
 )
 </script>
 
 <style scoped>
-.offline-banner {
+.net-banner {
   position: fixed;
   top: 0;
   left: 0;
@@ -49,32 +49,23 @@ watch(
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  background-color: var(--color-danger);
-  color: white;
+  color: #fff;
   font-size: 14px;
   font-weight: 500;
+  box-shadow: var(--shadow-md);
 }
 
-.online-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: var(--color-success);
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
+.net-banner--offline {
+  background: var(--danger);
+}
+
+.net-banner--online {
+  background: var(--success);
 }
 
 .banner-enter-active,
 .banner-leave-active {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease);
 }
 
 .banner-enter-from,

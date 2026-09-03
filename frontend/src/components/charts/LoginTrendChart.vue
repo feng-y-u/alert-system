@@ -1,103 +1,57 @@
 <template>
-  <div ref="chartRef" class="chart-container"></div>
+  <BaseChart :option="option" height="300px" />
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import * as echarts from 'echarts'
+import { computed } from 'vue'
+import BaseChart from './BaseChart.vue'
+import {
+  areaFill,
+  categoryAxis,
+  CHART_COLORS,
+  grid,
+  chartAnimation,
+  tooltip,
+  valueAxis,
+  withAlpha,
+} from '../../utils/chart'
 
 const props = defineProps({
-  data: { type: Array, default: () => [] }
+  data: { type: Array, default: () => [] },
 })
 
-const chartRef = ref(null)
-let chart = null
+const BRAND = CHART_COLORS.brand
 
-const buildOption = (data) => ({
-  animationDuration: 2500,
-  animationEasing: 'cubicOut',
-  tooltip: {
-    trigger: 'axis',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e5e7eb',
-    borderWidth: 1,
-    textStyle: { color: '#111827' },
-    padding: [12, 16],
-  },
-  grid: { left: 0, right: 0, top: 20, bottom: 0, containLabel: true },
-  xAxis: {
-    type: 'category',
-    data: data.map(t => t.date),
-    axisLine: { lineStyle: { color: '#e5e7eb' } },
-    axisTick: { show: false },
-    axisLabel: { color: '#6b7280', fontSize: 12 },
-  },
-  yAxis: {
-    type: 'value',
-    splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } },
-    axisLabel: { color: '#6b7280', fontSize: 12 },
-  },
-  series: [{
-    type: 'line',
-    data: data.map(t => t.count),
-    smooth: true,
-    symbol: 'circle',
-    symbolSize: 8,
-    animationDuration: 2500,
-    animationEasing: 'cubicOut',
-    animationDelay: 400,
-    lineStyle: {
-      width: 3,
-      color: '#111827',
-      shadowColor: 'rgba(17, 24, 39, 0.3)',
-      shadowBlur: 10,
-      shadowOffsetY: 5,
-    },
-    itemStyle: { color: '#111827', borderWidth: 2, borderColor: '#fff' },
-    areaStyle: {
-      opacity: 0.8,
-      color: {
-        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [
-          { offset: 0, color: 'rgba(17, 24, 39, 0.2)' },
-          { offset: 1, color: 'rgba(17, 24, 39, 0)' },
-        ],
+const option = computed(() => ({
+  ...chartAnimation,
+  // 切换时间范围时整图重绘（notMerge），重放画线动画，750ms 比 900ms 更利落
+  animationDuration: 750,
+  tooltip: tooltip('axis'),
+  grid: grid(),
+  xAxis: categoryAxis(props.data.map((d) => d.date)),
+  yAxis: valueAxis(),
+  series: [
+    {
+      name: '登录次数',
+      type: 'line',
+      data: props.data.map((d) => d.count),
+      smooth: true,
+      // 沿 X 轴单调的平滑：0 平原 → 真实数据的跳变处不会过冲下坠到零轴以下
+      smoothMonotone: 'x',
+      symbol: 'circle',
+      symbolSize: 7,
+      showSymbol: props.data.length <= 15,
+      lineStyle: {
+        width: 2.5,
+        color: BRAND,
+        shadowColor: withAlpha(BRAND, 0.3),
+        shadowBlur: 12,
+        shadowOffsetY: 6,
       },
+      itemStyle: { color: BRAND, borderWidth: 2, borderColor: '#fff' },
+      areaStyle: areaFill(BRAND),
+      emphasis: { focus: 'series' },
     },
-  }],
-})
-
-const render = () => {
-  if (!chartRef.value) return
-  chart?.dispose()
-  chart = echarts.init(chartRef.value)
-  chart.setOption(buildOption(props.data))
-}
-
-onMounted(() => {
-  chartRef.value.style.opacity = '0'
-  render()
-  requestAnimationFrame(() => {
-    if (chartRef.value) chartRef.value.style.opacity = '1'
-  })
-})
-
-watch(() => props.data, () => {
-  if (chartRef.value) chartRef.value.style.opacity = '0'
-  render()
-  requestAnimationFrame(() => {
-    if (chartRef.value) chartRef.value.style.opacity = '1'
-  })
-})
-
-onUnmounted(() => {
-  chart?.dispose()
-})
+  ],
+}))
 </script>
-
-<style scoped>
-.chart-container {
-  height: 320px;
-  transition: opacity 0.8s ease;
-}
-</style>

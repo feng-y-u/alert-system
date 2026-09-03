@@ -1,52 +1,50 @@
 <template>
-  <div ref="chartRef" class="chart-container"></div>
+  <BaseChart :option="option" merge-update height="260px" />
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import * as echarts from 'echarts'
+import { computed } from 'vue'
+import BaseChart from './BaseChart.vue'
+import { chartAnimation, CHART_COLORS, tooltip } from '../../utils/chart'
 
 const props = defineProps({
-  data: { type: Array, default: () => [] }
+  data: { type: Array, default: () => [] },
 })
 
-const chartRef = ref(null)
-let chart = null
+const NAME_MAP = { frequency: '频率异常', device: '设备异常' }
+const COLORS = [
+  CHART_COLORS.brand,
+  CHART_COLORS.warning,
+  CHART_COLORS.success,
+  CHART_COLORS.info,
+]
 
-const typeNameMap = { frequency: '频率异常', device: '设备异常' }
-
-const buildOption = (data) => ({
-  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-  legend: { bottom: 0, textStyle: { color: '#6b7280', fontSize: 12 } },
-  series: [{
-    type: 'pie',
-    radius: ['45%', '70%'],
-    center: ['50%', '45%'],
-    avoidLabelOverlap: false,
-    label: { show: false },
-    labelLine: { show: false },
-    data: data.map((item, i) => ({
-      name: typeNameMap[item.name] || item.name,
-      value: item.value,
-      itemStyle: { color: ['#111827', '#F59E0B'][i % 2] },
-    })),
-  }],
-})
-
-const render = () => {
-  if (!chartRef.value) return
-  chart?.dispose()
-  chart = echarts.init(chartRef.value)
-  chart.setOption(buildOption(props.data))
-}
-
-onMounted(render)
-watch(() => props.data, render)
-onUnmounted(() => chart?.dispose())
+const option = computed(() => ({
+  ...chartAnimation,
+  tooltip: tooltip('item', { formatter: '{b}: {c} ({d}%)' }),
+  legend: {
+    bottom: 0,
+    itemWidth: 8,
+    itemHeight: 8,
+    icon: 'circle',
+    textStyle: { color: '#64748b', fontSize: 12 },
+  },
+  series: [
+    {
+      name: '告警类型',
+      type: 'pie',
+      radius: ['52%', '76%'],
+      center: ['50%', '44%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: { borderColor: '#fff', borderWidth: 2, borderRadius: 5 },
+      data: props.data.map((item, i) => ({
+        name: NAME_MAP[item.name] ?? item.name,
+        value: item.value,
+        itemStyle: { color: COLORS[i % COLORS.length] },
+      })),
+    },
+  ],
+}))
 </script>
-
-<style scoped>
-.chart-container {
-  height: 280px;
-}
-</style>

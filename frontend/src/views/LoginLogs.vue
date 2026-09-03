@@ -1,168 +1,145 @@
 <template>
-  <div class="login-logs-page">
-    <LogFilter @search="handleSearch" @reset="handleReset" />
+  <div class="page">
+    <LogFilter @search="search" @reset="reset" />
 
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <span class="total-label">共 {{ total }} 条日志</span>
-      </div>
-      <div class="toolbar-right">
+    <SectionCard flush>
+      <template #actions>
+        <span class="total num">共 {{ total }} 条</span>
         <el-button type="danger" plain :disabled="total === 0" @click="handleClear">
-          <el-icon :size="16"><Delete /></el-icon>
-          清空
+          <el-icon :size="15"><Delete /></el-icon>
+          清空日志
         </el-button>
-      </div>
-    </div>
-
-    <div class="table-card" v-loading="loading">
-      <div v-if="error" class="error-placeholder">
-        <p>数据加载失败，请稍后重试</p>
-        <el-button type="primary" @click="fetchLogs" :disabled="retryCooldown">重试</el-button>
-      </div>
-
-      <template v-else>
-        <LogTable v-if="logs.length > 0" :logs="logs" />
-        <el-empty v-else description="暂无登录日志" />
-
-        <LogPagination
-          :total="total"
-          :skip="skip"
-          :limit="limit"
-          @change="handlePageChange"
-        />
       </template>
-    </div>
+
+      <DataTable
+        :items="items"
+        :total="total"
+        :skip="skip"
+        :limit="limit"
+        :loading="loading"
+        :error="error"
+        :cooldown="retryCooldown"
+        empty-title="暂无登录日志"
+        empty-description="校园系统上报后，登录记录会显示在这里"
+        @page-change="changePage"
+        @retry="execute"
+      >
+        <el-table-column prop="id" label="ID" width="72" />
+        <el-table-column prop="username" label="用户名" min-width="110" />
+        <el-table-column label="登录时间" min-width="160">
+          <template #default="{ row }">
+            <span class="num">{{ formatDateTime(row.login_time) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="ip_address" label="IP 地址" min-width="130">
+          <template #default="{ row }">
+            <span class="num">{{ row.ip_address }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="90" align="center">
+          <template #default="{ row }">
+            <StatusTag :status="row.login_status" type="login" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="location" label="地点" min-width="100">
+          <template #default="{ row }">
+            <span v-if="row.location">{{ row.location }}</span>
+            <span v-else class="muted">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="用户代理" min-width="220">
+          <template #default="{ row }">
+            <el-tooltip
+              v-if="row.user_agent"
+              :content="row.user_agent"
+              effect="dark"
+              placement="top"
+              :show-after="300"
+            >
+              <span class="truncate">{{ row.user_agent }}</span>
+            </el-tooltip>
+            <span v-else class="muted">—</span>
+          </template>
+        </el-table-column>
+      </DataTable>
+    </SectionCard>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
-import LogFilter from '../components/logs/LogFilter.vue'
-import LogTable from '../components/logs/LogTable.vue'
-import LogPagination from '../components/logs/LogPagination.vue'
 import { getLogs, clearLogs } from '../api/logs'
+import { useTableQuery } from '../composables/useTableQuery'
+import { formatDateTime } from '../utils/format'
+import SectionCard from '../components/common/SectionCard.vue'
+import DataTable from '../components/common/DataTable.vue'
+import StatusTag from '../components/common/StatusTag.vue'
+import LogFilter from '../components/logs/LogFilter.vue'
 
-const logs = ref([])
-const total = ref(0)
-const skip = ref(0)
-const limit = ref(50)
-const loading = ref(false)
-const error = ref(false)
-const retryCooldown = ref(false)
-let retryTimer = null
-const currentFilters = ref({})
+const {
+  items,
+  total,
+  skip,
+  limit,
+  loading,
+  error,
+  retryCooldown,
+  search,
+  reset,
+  changePage,
+  refresh,
+  execute,
+} = useTableQuery(getLogs, { limit: 20 })
 
-const fetchLogs = async () => {
-  if (retryCooldown.value) return
-  loading.value = true
-  error.value = false
-  try {
-    const res = await getLogs({
-      skip: skip.value,
-      limit: limit.value,
-      ...currentFilters.value
-    })
-    logs.value = res.items
-    total.value = res.total
-  } catch (err) {
-    console.error('Failed to fetch logs:', err)
-    error.value = true
-    retryCooldown.value = true
-    clearTimeout(retryTimer)
-    retryTimer = setTimeout(() => {
-      retryCooldown.value = false
-    }, 5000)
-  } finally {
-    loading.value = false
-  }
-}
+onMounted(execute)
 
-const handleSearch = (params) => {
-  skip.value = 0
-  currentFilters.value = params
-  fetchLogs()
-}
-
-const handleReset = () => {
-  skip.value = 0
-  currentFilters.value = {}
-  fetchLogs()
-}
-
-const handlePageChange = (newSkip, newLimit) => {
-  skip.value = newSkip
-  limit.value = newLimit
-  fetchLogs()
-}
-
-const handleClear = async () => {
+async function handleClear() {
   try {
     await ElMessageBox.confirm(
-      '确定清空所有登录日志？此操作不可恢复。',
+      '将清空全部登录日志，此操作不可恢复。',
       '确认清空',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+      {
+        confirmButtonText: '确定清空',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+      },
     )
     const res = await clearLogs()
     ElMessage.success(`已清空 ${res.deleted} 条日志`)
     skip.value = 0
-    fetchLogs()
+    refresh()
   } catch {
-    // 取消或失败都不处理
+    // 用户取消或删除失败，均不处理
   }
 }
-
-onMounted(fetchLogs)
-
-onUnmounted(() => {
-  clearTimeout(retryTimer)
-  retryTimer = null
-})
 </script>
 
 <style scoped>
-.login-logs-page {
-  padding: 0;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.total-label {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.table-card {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* 空状态文字颜色与 Caption 层级一致 */
-.table-card :deep(.el-empty__description p) {
-  color: #9CA3AF;
-}
-
-.error-placeholder {
+.page {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 60px 0;
+  gap: 22px;
 }
 
-.error-placeholder p {
-  font-size: 15px;
-  color: var(--color-text-secondary);
-  margin: 0;
+.total {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.truncate {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.muted {
+  color: var(--text-faint);
 }
 </style>
