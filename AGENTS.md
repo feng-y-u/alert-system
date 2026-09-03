@@ -161,7 +161,7 @@ pytest tests/test_integration.py::test_xxx -v       # 单用例
 - **`app/core/redis.py` 是死代码**：仅定义一个 `redis_client`，全仓无任何 import。实际 Redis 客户端在 `tasks/detection.py` 里用 `redis.from_url()` 自建。别把它当现成依赖来用。
 - **`docker-compose up -d` 会拉起全部 6 个服务**，不只是 MySQL + Redis —— 会额外占用 8000 / 8882 端口。本地开发只需基础设施时用 `docker-compose up -d mysql redis`。
 - **危险端点**：`DELETE /api/logs`（清空全部日志）与 `DELETE /api/alerts?scope=all|processed`（清空告警）**无二次确认、无软删除**。调用前确认目标环境。
-- **`frontend/dist/` 是已提交的构建产物**：改前端后必须 `npm run build` 才会进 Docker 镜像，Docker 部署看不到改动时先查这里。
+- **`frontend/dist/` 已被 `.gitignore` 忽略，不在仓库里**（易误解为已提交产物）。前端 Docker 镜像在容器内从源码构建（`frontend/Dockerfile`：`COPY . .` → `npm run build`），与宿主机 `dist/` 无关。改前端后 8882 看不到改动时，重建镜像：`docker-compose up -d --build frontend`。
 - **CORS 是 `allow_origins=["*"]` + `allow_credentials=True`**（`app/main.py`），仅适合开发，上线前需收敛。
 - **Celery 任务吞异常**：`detect_anomaly_for_log` / `run_anomaly_detection` 用 try/except 包住并返回错误字符串，不抛。任务失败时看 Celery 日志的返回值，不是看 worker 报错。
 
