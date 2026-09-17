@@ -318,3 +318,30 @@ JWT 载荷：`{"sub": "<user_id>", "exp": <UTC 时间>}`（`core/security.py:21-
 **无 CI/CD、无外部监控/APM、无错误追踪服务**：实测 `.github/`、`.gitlab-ci.yml`、`.pre-commit-config.yaml` 均不存在；代码中亦无 Sentry/OpenTelemetry 之类 SDK（`grep` 无命中）。
 
 **邮件服务的经验性约束（来自项目内文档）**：163 邮箱必须使用 `465 + SMTP_SSL`（`AGENTS.md`），代码强制 `smtplib.SMTP_SSL`（`tasks/email.py:83`、`api/settings.py:53`），与之一致；`.env.example` 默认端口亦是 465。
+
+---
+
+## 13.6 变更摘要（P0/P1 修复，2026-09-16）
+
+本次修复带来的 API 变化，**接入方需同步**（逐项证据见 `14-评估与改进.md` §30.0）：
+
+### 新增端点
+
+| 方法 | 路径 | 鉴权 | 说明 |
+|---|---|---|---|
+| POST | `/api/auth/change-password` | Bearer JWT（`get_current_user`，刻意绕过改密拦截） | 修改自己的密码。请求体 `{old_password, new_password}`（新密码 ≥8 位）；成功返回 `Token`（新 token，`must_change_password=false`）。原密码错误 / 新旧相同 → **400**，新密码过短 → **422** |
+| GET | `/api/audit-logs` | Bearer JWT | 查询平台自身操作审计（`items/total/skip/limit`）。参数 `action`、`actor`、`skip`、`limit`(≤200)。动作标识见 `services/audit.py` |
+
+### 行为变更
+
+| 端点 | 变更 | 状态码影响 |
+|---|---|---|
+| `POST /api/auth/login` | 响应新增 `must_change_password`；新增失败限流 | 超限 → **429**（带 `Retry-After`） |
+| 所有管理端接口 | 未修改初始密码的用户被拦截 | **403**（detail 含「请先修改初始密码」） |
+| `POST /api/logs` | `login_status` 入库校验并归一化（`failed`/`fail` → `failure`）；broker 不可用时**仍返回 201**（投递失败只记日志） | 非法取值 → **422** |
+| `GET /api/logs`、`GET /api/alerts` | 过滤软删除数据；`status`/`severity` 改用 `Literal` 校验 | 非法枚举值 → **422** |
+| `GET /api/stats`、`GET /api/stats/alerts` | `days` 加范围校验（1–365）；按 `BUSINESS_TIMEZONE` 自然日切分 | 越界 → **422**（原先 `/stats/alerts` 为 400） |
+| `PUT /api/alerts/{id}` | `status` 加 `Literal` 校验；非 `resolved` 时清空 `resolved_at`；状态变更写审计 | 非法状态 → **422** |
+| `DELETE /api/logs` | 需 `confirm=true`；改为**软删除** + 审计 | 缺 `confirm` → **409**；响应含 `soft_deleted: true` |
+| `DELETE /api/alerts` | 同上（`scope` + `confirm=true`） | 缺 `confirm` → **409** |
+| `GET /api/notifications/stream` | 校验改用独立短会话；Redis 订阅失败时不再挂住连接 | 订阅失败 → **503** |

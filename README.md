@@ -11,7 +11,7 @@
 | 后端 | FastAPI + SQLAlchemy + Alembic + Celery + Redis |
 | 数据库 | MySQL 8.0 |
 | 前端 | Vue 3 + Element Plus + ECharts + Pinia + Vue Router |
-| 分析 | Pandas + NumPy |
+| 前端 | Vue 3 + Element Plus + ECharts + Pinia + Vue Router |
 
 ## 快速开始
 
@@ -25,19 +25,20 @@ docker-compose up -d
 
 | 服务 | 端口 | 说明 |
 |---|---|---|
-| 前端 | `80` | Nginx 托管静态文件 + 反向代理 |
+| 前端 | `8882` | Nginx 托管静态文件 + 反向代理（容器内为 80） |
 | 后端 | `8000` | FastAPI API 服务 |
 | MySQL | `8881` | 数据库 |
 | Redis | `8880` | 缓存 + Celery Broker |
 
-首次启动后自动创建管理员账号：`admin` / `admin123`
+首次启动后自动创建管理员账号：`admin` / `admin123`。
+该口令是公开的示例值，**首次登录必须先修改密码**（前端会跳转到改密页；后端对其它接口一律 403）。
 
 ### 本地开发
 
 #### 1. 启动基础服务
 
 ```bash
-docker-compose up -d    # 启动 MySQL 8.0 + Redis 7
+docker-compose up -d mysql redis    # 只起 MySQL 8.0 + Redis 7（本地开发用）
 ```
 
 #### 2. 启动后端
@@ -94,12 +95,16 @@ cd backend
 python -m pytest tests/ -v
 ```
 
-测试覆盖：
+测试覆盖（共 70 个用例，无需 Redis 与 MySQL 即可运行）：
 - 健康检查
 - 密码哈希 / JWT 认证
 - 频率异常检测 / 设备异常检测 / 告警去重
 - 认证 → 日志写入 → 检测 → 告警 API → 统计 全流程集成测试
 - SSE 推送事件发布
+- 词表契约（`login_status` 归一化、告警状态校验）
+- 配置与启动自检（占位密钥检测、业务时区换算）
+- 可靠性：broker 不可用时上报接口仍返回 201
+- 治理：软删除 / 审计日志 / 确认参数 / 登录限流 / 初始密码强制修改
 
 ## 项目结构
 

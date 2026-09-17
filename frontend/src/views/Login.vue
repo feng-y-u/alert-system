@@ -157,8 +157,9 @@ async function handleLogin() {
   loading.value = true
   error.value = ''
   try {
-    await authStore.login(form.username.trim(), form.password)
-    router.push('/')
+    const res = await authStore.login(form.username.trim(), form.password)
+    // 初始口令未修改时先去改密（后端对其余接口一律 403，见 P1-6）
+    router.push(res.must_change_password ? '/change-password' : '/')
   } catch (err) {
     const detail = err.response?.data?.detail
     error.value = Array.isArray(detail)

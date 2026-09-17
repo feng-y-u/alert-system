@@ -5,5 +5,6 @@ export function getLogs(params) {
 }
 
 export function clearLogs() {
-  return api.delete('/api/logs')
+  // confirm=true：后端自 P1-4 起要求销毁类操作显式确认，否则返回 409
+  return api.delete('/api/logs', { params: { confirm: true } })
 }
