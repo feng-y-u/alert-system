@@ -1,8 +1,15 @@
 /**
- * ECharts 共有配置。
- * 四个图表此前各自重复了坐标轴、tooltip、网格的样式定义，收在这里统一。
- * 配色与 App.vue 设计 Token 保持一致。
+ * ECharts 共有配置与**按图形语义区分**的动效预设。
+ *
+ * 与旧实现（`chartAnimation` 一份 900ms 配置给四种图共用）的差别：
+ * 折线要「画」出来、柱要「长」出来、环要「扫」出来，
+ * 三者对时长与错峰的诉求完全不同，因此这里按 kind 分派；
+ * 数据更新的过渡时长统一比入场短，避免拖沓。
+ *
+ * 缓动与时长取自 utils/motion.js，与 CSS 侧同一套节奏。
  */
+
+import { DURATION } from './motion'
 
 const AXIS_LINE = '#e6eaf1'
 const SPLIT_LINE = '#eff2f7'
@@ -81,14 +88,124 @@ export function withAlpha(hex, alpha) {
 }
 
 /**
- * 图表统一动效。
- * animationDuration / animationEasing：首次绘制（入场）
- * animationDurationUpdate / animationEasingUpdate：数据切换（近 7 天 ↔ 近 30 天）时的平滑过渡
+ * 图表动画配置。
+ *
+ * @param {'line'|'bar'|'pie'} kind 图形类型，决定入场时长与错峰步长
+ * @param {boolean} reduced 系统是否要求减少动态效果
+ * @returns {object} 可直接展开进 ECharts option 的动画字段
  */
-export const chartAnimation = {
-  animation: true,
-  animationDuration: 900,
-  animationEasing: 'cubicOut',
-  animationDurationUpdate: 550,
-  animationEasingUpdate: 'cubicInOut',
+export function chartMotion(kind = 'line', reduced = false) {
+  if (reduced) {
+    // 完全关闭动画：数据仍然正确呈现，只是没有过渡
+    return { animation: false, animationDuration: 0, animationDurationUpdate: 0 }
+  }
+
+  const base = {
+    animation: true,
+    // 数据点超过阈值时 ECharts 自动跳过动画，避免大数据量下掉帧
+    animationThreshold: 800,
+    animationEasing: 'cubicOut',
+    // 数据更新只做形变，不做入场
+    animationEasingUpdate: 'cubicInOut',
+    animationDurationUpdate: DURATION.chartUpdate,
+  }
+
+  switch (kind) {
+    case 'bar':
+      // 柱子自左向右依次长出
+      return {
+        ...base,
+        animationDuration: DURATION.chartBar,
+        animationDelay: (index) => index * 45,
+      }
+    case 'pie':
+      // 扇区由内向外依次扫出（expansion 比整体 scale 更克制）
+      return {
+        ...base,
+        animationDuration: DURATION.chartPie,
+        animationType: 'expansion',
+        animationDelay: (index) => index * 70,
+      }
+    case 'line':
+    default:
+      // 折线的路径由 ECharts 自身插值绘制；这里的延迟让数据点按 X 顺序出现。
+      // 额外的「从左到右逐点绘制」由 BaseChart 的 entrance="sweep" 负责。
+      return {
+        ...base,
+        animationDuration: DURATION.chartLine,
+        animationDelay: (index) => index * 6,
+      }
+  }
+}
+
+/**
+ * 折线 + 面积系列（两张趋势图此前各自复制了这段结构，只差颜色与名称）。
+ */
+export function lineSeries({ id, name, data, color, showSymbol = false }) {
+  return {
+    id,
+    name,
+    type: 'line',
+    data,
+    smooth: true,
+    // 沿 X 轴单调的平滑：0 平原 → 真实数据的跳变处不会过冲下坠到零轴以下
+    smoothMonotone: 'x',
+    symbol: 'circle',
+    symbolSize: 6,
+    showSymbol,
+    lineStyle: {
+      width: 2.5,
+      color,
+      shadowColor: withAlpha(color, 0.28),
+      shadowBlur: 12,
+      shadowOffsetY: 6,
+    },
+    itemStyle: { color, borderWidth: 2, borderColor: '#fff' },
+    areaStyle: areaFill(color),
+    emphasis: { focus: 'series' },
+  }
+}
+
+/**
+ * 柱状系列（严重级别分布）。
+ *
+ * @param {{ items: Array<{ value: number, color: string }>, barWidth?: string }} params
+ */
+export function barSeries({ id, name, items, barWidth = '38%' }) {
+  return {
+    id,
+    name,
+    type: 'bar',
+    barWidth,
+    data: items.map((item) => ({
+      value: item.value,
+      itemStyle: { color: item.color, borderRadius: [7, 7, 0, 0] },
+    })),
+    emphasis: { focus: 'series' },
+  }
+}
+
+/**
+ * 环形（甜甜圈）系列（告警类型分布）。
+ *
+ * @param {{ items: Array<{ name: string, value: number, color: string }> }} params
+ */
+export function donutSeries({ id, name, items, center = ['50%', '44%'] }) {
+  return {
+    id,
+    name,
+    type: 'pie',
+    radius: ['52%', '76%'],
+    center,
+    avoidLabelOverlap: false,
+    label: { show: false },
+    labelLine: { show: false },
+    itemStyle: { borderColor: '#fff', borderWidth: 2, borderRadius: 5 },
+    data: items.map((item) => ({
+      name: item.name,
+      value: item.value,
+      itemStyle: { color: item.color },
+    })),
+    emphasis: { scale: false, itemStyle: { shadowBlur: 12, shadowColor: 'rgba(15,23,42,0.14)' } },
+  }
 }

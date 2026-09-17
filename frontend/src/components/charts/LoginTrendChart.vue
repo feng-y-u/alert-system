@@ -1,57 +1,44 @@
 <template>
-  <BaseChart :option="option" height="300px" />
+  <BaseChart :option="option" entrance="sweep" :height="height" />
 </template>
 
 <script setup>
 import { computed } from 'vue'
+
 import BaseChart from './BaseChart.vue'
+import { useReducedMotion } from '../../composables/useReducedMotion'
 import {
-  areaFill,
   categoryAxis,
+  chartMotion,
   CHART_COLORS,
   grid,
-  chartAnimation,
+  lineSeries,
   tooltip,
   valueAxis,
-  withAlpha,
 } from '../../utils/chart'
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
+  /** 窄屏下由父级传入更矮的高度，避免趋势图占据整屏 */
+  height: { type: String, default: 'clamp(220px, 30vw, 300px)' },
 })
 
-const BRAND = CHART_COLORS.brand
+const reduced = useReducedMotion()
 
 const option = computed(() => ({
-  ...chartAnimation,
-  // 切换时间范围时整图重绘（notMerge），重放画线动画，750ms 比 900ms 更利落
-  animationDuration: 750,
+  ...chartMotion('line', reduced.value),
   tooltip: tooltip('axis'),
   grid: grid(),
   xAxis: categoryAxis(props.data.map((d) => d.date)),
   yAxis: valueAxis(),
   series: [
-    {
+    lineSeries({
+      id: 'login-trend',
       name: '登录次数',
-      type: 'line',
       data: props.data.map((d) => d.count),
-      smooth: true,
-      // 沿 X 轴单调的平滑：0 平原 → 真实数据的跳变处不会过冲下坠到零轴以下
-      smoothMonotone: 'x',
-      symbol: 'circle',
-      symbolSize: 7,
+      color: CHART_COLORS.brand,
       showSymbol: props.data.length <= 15,
-      lineStyle: {
-        width: 2.5,
-        color: BRAND,
-        shadowColor: withAlpha(BRAND, 0.3),
-        shadowBlur: 12,
-        shadowOffsetY: 6,
-      },
-      itemStyle: { color: BRAND, borderWidth: 2, borderColor: '#fff' },
-      areaStyle: areaFill(BRAND),
-      emphasis: { focus: 'series' },
-    },
+    }),
   ],
 }))
 </script>

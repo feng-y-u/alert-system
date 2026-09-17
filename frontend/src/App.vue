@@ -98,9 +98,18 @@ function onReconnected() {
   --nav-w-collapsed: 76px;
   --topbar-h: 66px;
 
-  /* 动效 */
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --dur: 0.2s;
+  /* 动效：三个层级 + 三条曲线，避免所有交互共用同一套时长
+     （数值与 utils/motion.js 的 DURATION / EASING 同源，改节奏时两边一起改） */
+  --motion-fast: 140ms; /* 微交互：hover / 焦点 / 按下 */
+  --motion-base: 220ms; /* 状态切换：展开 / Tab / 筛选 */
+  --motion-slow: 380ms; /* 内容与图层入场 */
+  --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-move: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 兼容仍在引用旧变量的页面（MainLayout / Login 等） */
+  --dur: var(--motion-base);
+  --ease: var(--ease-standard);
 
   /* ============================================================
      Element Plus 变量覆盖（组件内部沿用同一套视觉语言）
@@ -286,7 +295,12 @@ ul, ol {
 .el-button {
   font-weight: 500;
   border-radius: var(--r-sm);
-  transition: all var(--dur) var(--ease);
+  /* 只过渡绘制类属性：transition: all 会连带布局属性一起过渡，容易抖动 */
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
 }
 
 .el-button--primary {
@@ -359,5 +373,58 @@ ul, ol {
 .el-empty__description p {
   color: var(--text-faint);
   font-size: 14px;
+}
+
+/* ============================================================
+   入场工具类与无障碍降级
+   ------------------------------------------------------------
+   .reveal 是全局入场工具类：延迟由 utils/motion.js 的 revealStyle()
+   以 --reveal-delay 注入，取代原先散落各处的 nth-child 硬编码。
+   只动画 transform / opacity（合成层属性），不触发回流。
+
+   填充模式用 backwards 而不是 both：动画结束后元素回到自身样式，
+   否则动画的终态会一直覆盖 hover 的 transform，导致卡片 hover 位移失效。
+   ============================================================ */
+:root {
+  --reveal-distance: 12px;
+  --reveal-duration: var(--motion-slow);
+}
+
+.reveal {
+  animation: reveal-rise var(--reveal-duration) var(--ease-enter) backwards;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--reveal-distance), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 窄屏减小位移幅度，避免出现"整页往上顶"的观感 */
+@media (max-width: 900px) {
+  :root {
+    --reveal-distance: 8px;
+  }
+}
+
+/* 系统要求减少动态效果：全局降到近乎瞬时。
+   注意保留终止状态，元素不会停留在不可见状态。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 </style>

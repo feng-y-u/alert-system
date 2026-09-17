@@ -1,15 +1,20 @@
 <template>
-  <BaseChart :option="option" merge-update height="260px" />
+  <BaseChart :option="option" :height="height" />
 </template>
 
 <script setup>
 import { computed } from 'vue'
+
 import BaseChart from './BaseChart.vue'
-import { chartAnimation, CHART_COLORS, tooltip } from '../../utils/chart'
+import { useReducedMotion } from '../../composables/useReducedMotion'
+import { chartMotion, CHART_COLORS, donutSeries, tooltip } from '../../utils/chart'
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
+  height: { type: String, default: 'clamp(200px, 26vw, 260px)' },
 })
+
+const reduced = useReducedMotion()
 
 const NAME_MAP = { frequency: '频率异常', device: '设备异常' }
 const COLORS = [
@@ -20,7 +25,7 @@ const COLORS = [
 ]
 
 const option = computed(() => ({
-  ...chartAnimation,
+  ...chartMotion('pie', reduced.value),
   tooltip: tooltip('item', { formatter: '{b}: {c} ({d}%)' }),
   legend: {
     bottom: 0,
@@ -30,21 +35,15 @@ const option = computed(() => ({
     textStyle: { color: '#64748b', fontSize: 12 },
   },
   series: [
-    {
+    donutSeries({
+      id: 'type-dist',
       name: '告警类型',
-      type: 'pie',
-      radius: ['52%', '76%'],
-      center: ['50%', '44%'],
-      avoidLabelOverlap: false,
-      label: { show: false },
-      labelLine: { show: false },
-      itemStyle: { borderColor: '#fff', borderWidth: 2, borderRadius: 5 },
-      data: props.data.map((item, i) => ({
+      items: props.data.map((item, index) => ({
         name: NAME_MAP[item.name] ?? item.name,
         value: item.value,
-        itemStyle: { color: COLORS[i % COLORS.length] },
+        color: COLORS[index % COLORS.length],
       })),
-    },
+    }),
   ],
 }))
 </script>

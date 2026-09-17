@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard" :class="{ 'is-refreshing': isRefreshing }">
+  <div class="dashboard">
     <ErrorState
       v-if="error"
       title="仪表盘数据加载失败"
@@ -9,35 +9,29 @@
     />
 
     <template v-else>
-      <!-- 统计卡片 -->
+      <!-- 统计卡片：外壳先入场，数字待数据到位后再滚入 -->
       <div class="stat-grid">
         <StatCard
-          label="今日登录"
-          :value="stats.todayLogins"
-          :icon="TrendCharts"
-          tone="brand"
-          hint="按 UTC 自然日统计"
-        />
-        <StatCard
-          label="待处理告警"
-          :value="stats.pendingAlerts"
-          :icon="Warning"
-          :tone="stats.pendingAlerts > 0 ? 'warning' : 'success'"
-          :hint="stats.pendingAlerts > 0 ? '需要管理员跟进' : '暂无待处理事项'"
-        />
-        <StatCard
-          label="活跃用户"
-          :value="stats.activeUsers"
-          :icon="User"
-          tone="info"
-          hint="今日有登录记录的账号"
+          v-for="(card, index) in statCards"
+          :key="card.label"
+          class="reveal"
+          :style="revealStyle(index)"
+          :label="card.label"
+          :value="card.value"
+          :icon="card.icon"
+          :tone="card.tone"
+          :hint="card.hint"
+          :ready="ready"
         />
       </div>
 
-      <!-- 登录趋势 -->
+      <!-- 趋势：外壳在统计卡之后入场，曲线在数据到位后从左到右绘制 -->
       <SectionCard
+        class="reveal"
+        :style="revealStyle(0, { base: 150 })"
         title="登录趋势"
         :subtitle="`近 ${days} 天的登录次数变化`"
+        :loading="isRefreshing"
       >
         <template #actions>
           <el-radio-group v-model="timeRange" size="small">
@@ -55,8 +49,13 @@
         />
       </SectionCard>
 
-      <!-- 告警趋势 -->
-      <SectionCard title="告警趋势" :subtitle="`近 ${days} 天的告警数量变化`">
+      <SectionCard
+        class="reveal"
+        :style="revealStyle(1, { base: 150 })"
+        title="告警趋势"
+        :subtitle="`近 ${days} 天的告警数量变化`"
+        :loading="isRefreshing"
+      >
         <AlertTrendChart v-if="alertTrend.length" :data="alertTrend" />
         <EmptyState
           v-else
@@ -66,14 +65,24 @@
         />
       </SectionCard>
 
-      <!-- 分布图 -->
+      <!-- 分布：最后入场，柱与扇区再各自错峰生长 -->
       <div class="dist-grid">
-        <SectionCard title="告警类型分布">
+        <SectionCard
+          class="reveal"
+          :style="revealStyle(0, { base: 260 })"
+          title="告警类型分布"
+          :loading="isRefreshing"
+        >
           <TypeDistChart v-if="typeDist.length" :data="typeDist" />
           <EmptyState v-else title="暂无数据" />
         </SectionCard>
 
-        <SectionCard title="严重级别分布">
+        <SectionCard
+          class="reveal"
+          :style="revealStyle(1, { base: 260 })"
+          title="严重级别分布"
+          :loading="isRefreshing"
+        >
           <SeverityDistChart v-if="severityDist.length" :data="severityDist" />
           <EmptyState v-else title="暂无数据" />
         </SectionCard>
@@ -88,6 +97,7 @@ import api from '../api'
 import { getAlertStats } from '../api/stats'
 import { useAsyncData } from '../composables/useAsyncData'
 import { debounce } from '../utils/format'
+import { revealStyle } from '../utils/motion'
 import SectionCard from '../components/common/SectionCard.vue'
 import StatCard from '../components/common/StatCard.vue'
 import EmptyState from '../components/common/EmptyState.vue'
@@ -110,9 +120,42 @@ const alertTrend = ref([])
 const typeDist = ref([])
 const severityDist = ref([])
 const timeRange = ref('week')
+/** 首屏数据是否已到位：到位后才把骨架换成数字（数字自己会滚动） */
+const ready = ref(false)
 const initialized = ref(false)
 
 const days = computed(() => (timeRange.value === 'month' ? 30 : 7))
+
+/**
+ * 卡片由数据驱动生成，模板不再重复三遍；
+ * 入场错峰交给 revealStyle(index)，不再是 CSS 里的 nth-child 硬编码。
+ */
+const statCards = computed(() => {
+  const pending = stats.value.pendingAlerts
+  return [
+    {
+      label: '今日登录',
+      value: stats.value.todayLogins,
+      icon: TrendCharts,
+      tone: 'brand',
+      hint: '按业务时区自然日统计',
+    },
+    {
+      label: '待处理告警',
+      value: pending,
+      icon: Warning,
+      tone: pending > 0 ? 'warning' : 'success',
+      hint: pending > 0 ? '需要管理员跟进' : '暂无待处理事项',
+    },
+    {
+      label: '活跃用户',
+      value: stats.value.activeUsers,
+      icon: User,
+      tone: 'info',
+      hint: '今日有登录记录的账号',
+    },
+  ]
+})
 
 async function loadDashboard() {
   const [loginRes, alertRes] = await Promise.all([
@@ -129,6 +172,7 @@ async function loadDashboard() {
   alertTrend.value = alertRes.alertTrend ?? []
   typeDist.value = alertRes.typeDist ?? []
   severityDist.value = alertRes.severityDist ?? []
+  ready.value = true
   initialized.value = true
 }
 
@@ -139,8 +183,10 @@ const { loading, error, retryCooldown, execute } = useAsyncData(loadDashboard, {
 // 切换时间范围防抖，避免快速连点打出多次请求
 watch(days, debounce(() => execute(), 250))
 
-// 仅在"已有数据后的刷新"（切换时间范围）时变暗提示，
-// 首次加载时入场动画本身就在播放，不需要额外反馈
+/**
+ * 刷新态：不再让整片内容变暗（旧实现是 opacity .62，观感"变灰"且与入场动画重叠），
+ * 改为区块顶部的细进度条 + 数字自身平滑过渡到新值。
+ */
 const isRefreshing = computed(() => loading.value && initialized.value)
 </script>
 
@@ -149,64 +195,6 @@ const isRefreshing = computed(() => loading.value && initialized.value)
   display: flex;
   flex-direction: column;
   gap: 22px;
-}
-
-/* ===== 入场动画：卡片 → 趋势图 → 分布图 依次浮现 ===== */
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dashboard > * {
-  animation: rise-in 0.5s var(--ease) backwards;
-  transition: opacity 0.18s ease;
-}
-
-.dashboard > *:nth-child(1) {
-  animation-delay: 0.05s;
-}
-.dashboard > *:nth-child(2) {
-  animation-delay: 0.14s;
-}
-.dashboard > *:nth-child(3) {
-  animation-delay: 0.22s;
-}
-.dashboard > *:nth-child(4) {
-  animation-delay: 0.3s;
-}
-
-/* 统计卡与分布卡内部再各自错开一拍 */
-.stat-grid > *,
-.dist-grid > * {
-  animation: rise-in 0.5s var(--ease) backwards;
-}
-
-.stat-grid > *:nth-child(1) {
-  animation-delay: 0.05s;
-}
-.stat-grid > *:nth-child(2) {
-  animation-delay: 0.13s;
-}
-.stat-grid > *:nth-child(3) {
-  animation-delay: 0.21s;
-}
-
-.dist-grid > *:nth-child(1) {
-  animation-delay: 0.34s;
-}
-.dist-grid > *:nth-child(2) {
-  animation-delay: 0.42s;
-}
-
-/* ===== 切换时间范围时：拉取数据期间内容轻微变暗 ===== */
-.dashboard.is-refreshing > * {
-  opacity: 0.62;
 }
 
 .stat-grid {
@@ -221,14 +209,9 @@ const isRefreshing = computed(() => loading.value && initialized.value)
   gap: 22px;
 }
 
-/* 系统开启"减少动态效果"时不播放入场动画 */
-@media (prefers-reduced-motion: reduce) {
-  .dashboard > *,
-  .stat-grid > *,
-  .dist-grid > * {
-    animation: none;
-  }
-}
+/* 入场动画由全局 .reveal 工具类承担（App.vue），
+   延迟由 app/utils/motion.js 计算后以 --reveal-delay 注入，
+   这里不再出现任何 nth-child 硬编码。 */
 
 @media (max-width: 1200px) {
   .stat-grid {
@@ -237,6 +220,12 @@ const isRefreshing = computed(() => loading.value && initialized.value)
 }
 
 @media (max-width: 900px) {
+  .dashboard,
+  .stat-grid,
+  .dist-grid {
+    gap: 16px;
+  }
+
   .dist-grid {
     grid-template-columns: 1fr;
   }

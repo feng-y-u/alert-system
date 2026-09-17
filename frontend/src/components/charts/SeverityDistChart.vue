@@ -1,13 +1,16 @@
 <template>
-  <BaseChart :option="option" merge-update height="260px" />
+  <BaseChart :option="option" :height="height" />
 </template>
 
 <script setup>
 import { computed } from 'vue'
+
 import BaseChart from './BaseChart.vue'
+import { useReducedMotion } from '../../composables/useReducedMotion'
 import {
+  barSeries,
   categoryAxis,
-  chartAnimation,
+  chartMotion,
   CHART_COLORS,
   grid,
   tooltip,
@@ -16,7 +19,10 @@ import {
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
+  height: { type: String, default: 'clamp(200px, 26vw, 260px)' },
 })
+
+const reduced = useReducedMotion()
 
 const NAME_MAP = { low: '低', medium: '中', high: '高' }
 const COLOR_MAP = {
@@ -26,7 +32,7 @@ const COLOR_MAP = {
 }
 
 const option = computed(() => ({
-  ...chartAnimation,
+  ...chartMotion('bar', reduced.value),
   tooltip: tooltip('axis', { formatter: '{b}级别: {c} 条' }),
   grid: grid(),
   xAxis: categoryAxis(
@@ -35,18 +41,14 @@ const option = computed(() => ({
   ),
   yAxis: valueAxis({ minInterval: 1 }),
   series: [
-    {
+    barSeries({
+      id: 'severity-dist',
       name: '严重级别',
-      type: 'bar',
-      barWidth: '38%',
-      data: props.data.map((s) => ({
+      items: props.data.map((s) => ({
         value: s.value,
-        itemStyle: {
-          color: COLOR_MAP[s.name] ?? CHART_COLORS.brand,
-          borderRadius: [7, 7, 0, 0],
-        },
+        color: COLOR_MAP[s.name] ?? CHART_COLORS.brand,
       })),
-    },
+    }),
   ],
 }))
 </script>
