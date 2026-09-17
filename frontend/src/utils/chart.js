@@ -139,6 +139,34 @@ export function chartMotion(kind = 'line', reduced = false) {
 }
 
 /**
+ * 取 option 中的 X 轴类目数组（兼容 xAxis 为对象或数组）。
+ */
+export function categoriesOf(option) {
+  const axis = Array.isArray(option?.xAxis) ? option.xAxis[0] : option?.xAxis
+  const data = axis?.data
+  return Array.isArray(data) ? data : []
+}
+
+/**
+ * 两次 option 的 X 轴类目是否**完全一致**（顺序敏感）。
+ *
+ * 这个判断决定图表的更新语义，不能省：
+ * - 一致（例如同一时间窗内数值刷新）：数据点一一对应，做点对点形变过渡最自然；
+ * - 不一致（7 天 ↔ 30 天）：两套类目之间**没有对应关系**，按索引形变只会插值出
+ *   既不像旧数据也不像新数据的中间曲线，观感即"残影/两条曲线叠加"。
+ *   这种情况必须整图原子替换（见 BaseChart 的淡出-替换-淡入）。
+ */
+export function isSameCategories(prevOption, nextOption) {
+  const prev = categoriesOf(prevOption)
+  const next = categoriesOf(nextOption)
+  if (prev.length !== next.length) return false
+  for (let i = 0; i < prev.length; i += 1) {
+    if (prev[i] !== next[i]) return false
+  }
+  return true
+}
+
+/**
  * 折线 + 面积系列（两张趋势图此前各自复制了这段结构，只差颜色与名称）。
  */
 export function lineSeries({ id, name, data, color, showSymbol = false }) {

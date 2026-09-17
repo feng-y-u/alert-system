@@ -158,23 +158,40 @@ const statCards = computed(() => {
   ]
 })
 
-async function loadDashboard() {
-  const [loginRes, alertRes] = await Promise.all([
-    api.get('/api/stats', { params: { days: days.value } }),
-    getAlertStats(days.value),
-  ])
+/**
+ * 请求序号：快速连续切换 7 天/30 天时，先发出的请求可能后返回。
+ * 没有这个守卫，过期响应会把新数据覆盖成旧数据，图表与开关状态就会不一致。
+ */
+let loadToken = 0
 
-  stats.value = {
-    todayLogins: loginRes.todayLogins,
-    pendingAlerts: loginRes.pendingAlerts,
-    activeUsers: loginRes.activeUsers,
+async function loadDashboard() {
+  const token = (loadToken += 1)
+
+  try {
+    const [loginRes, alertRes] = await Promise.all([
+      api.get('/api/stats', { params: { days: days.value } }),
+      getAlertStats(days.value),
+    ])
+
+    // 已有更新的请求在途：丢弃这次结果
+    if (token !== loadToken) return
+
+    stats.value = {
+      todayLogins: loginRes.todayLogins,
+      pendingAlerts: loginRes.pendingAlerts,
+      activeUsers: loginRes.activeUsers,
+    }
+    trend.value = loginRes.loginTrend ?? []
+    alertTrend.value = alertRes.alertTrend ?? []
+    typeDist.value = alertRes.typeDist ?? []
+    severityDist.value = alertRes.severityDist ?? []
+    ready.value = true
+    initialized.value = true
+  } catch (err) {
+    // 过期请求的失败不冒泡，避免把已经成功的新数据打成错误态
+    if (token !== loadToken) return
+    throw err
   }
-  trend.value = loginRes.loginTrend ?? []
-  alertTrend.value = alertRes.alertTrend ?? []
-  typeDist.value = alertRes.typeDist ?? []
-  severityDist.value = alertRes.severityDist ?? []
-  ready.value = true
-  initialized.value = true
 }
 
 const { loading, error, retryCooldown, execute } = useAsyncData(loadDashboard, {
