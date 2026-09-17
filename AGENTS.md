@@ -1,6 +1,6 @@
 # AGENTS.md
 
-OpenCode / CodeBuddy 专用速查。与 `CLAUDE.md` 互补：本文件只记录**易踩坑、文档/config 不一致或需要交叉多处才能推断**的事实。本文件与 `CLAUDE.md` 冲突时以本文件为准（已验证代码）。
+OpenCode / CodeBuddy 专用速查。与 `docs/tech/` 互补：本文件只记录**易踩坑、文档/config 不一致或需要交叉多处才能推断**的事实。本文件与 `docs/tech/` 冲突时以本文件为准（已验证代码）。
 
 ## 项目定位
 
@@ -207,5 +207,5 @@ Celery 需 Redis（端口 8880）运行，否则 worker 启动失败；**Redis �
 
 - 详细设计、数据流、字段定义：`docs/DESIGN.md`
 - UI 规范：`docs/UI.md`
-- 技术栈、命令、JWT 流程：`CLAUDE.md`
+- 技术栈、命令、JWT 流程、架构与全量技术文档：`docs/tech/README.md`
 - 各周实现计划与历史决策依据：`docs/superpowers/plans/`、`docs/specs/`

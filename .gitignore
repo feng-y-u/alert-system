@@ -34,3 +34,21 @@ redis_data/
 
 # Generated SQLite
 *.db
+
+# Flutter 客户端构建产物
+# （flutter_app/.gitignore 只存在于 flutter 分支，这里再兜一层，
+#   防止在 dev 上执行 git add -A 时把 100+ 个产物扫入暂存区）
+/flutter_app/build/
+/flutter_app/.dart_tool/
+/flutter_app/verify/
+/flutter_app/.flutter-plugins-dependencies
+/flutter_app/.flutter_tool_state
+/flutter_app/windows/flutter/ephemeral/
+
+# Flutter 工具在仓库根生成的本地状态
+.flutter_settings
+.flutter_tool_state
+
+# 答辩材料生成产物与个人材料（非源码）
+output/
+答辩材料/
