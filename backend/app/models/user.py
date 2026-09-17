@@ -18,5 +18,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     role = Column(String(20), default="admin")
     is_active = Column(Boolean, default=True)
+    #: 首次登录（初始口令）后必须修改密码，否则除改密接口外一律 403
+    must_change_password = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

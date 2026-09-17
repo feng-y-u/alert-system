@@ -29,8 +29,12 @@ def detect_frequency_anomaly(
     """
     # 确定时间窗口
     if log_id:
-        # 实时检测：获取当前日志时间
-        current_log = db.query(LoginLog).filter(LoginLog.id == log_id).first()
+        # 实时检测：获取当前日志时间（软删除的日志不参与检测）
+        current_log = (
+            db.query(LoginLog)
+            .filter(LoginLog.id == log_id, LoginLog.deleted_at.is_(None))
+            .first()
+        )
         if not current_log:
             return None
         end_time = current_log.login_time
@@ -44,7 +48,8 @@ def detect_frequency_anomaly(
     count = db.query(func.count(LoginLog.id)).filter(
         LoginLog.username == username,
         LoginLog.login_time >= start_time,
-        LoginLog.login_time <= end_time
+        LoginLog.login_time <= end_time,
+        LoginLog.deleted_at.is_(None),
     ).scalar()
 
     # 判断是否异常
@@ -98,7 +103,11 @@ def detect_device_anomaly(
     """
     # 确定时间窗口
     if log_id:
-        current_log = db.query(LoginLog).filter(LoginLog.id == log_id).first()
+        current_log = (
+            db.query(LoginLog)
+            .filter(LoginLog.id == log_id, LoginLog.deleted_at.is_(None))
+            .first()
+        )
         if not current_log:
             return None
         end_time = current_log.login_time
@@ -111,7 +120,8 @@ def detect_device_anomaly(
     rows = db.query(LoginLog.user_agent, LoginLog.ip_address).filter(
         LoginLog.username == username,
         LoginLog.login_time >= start_time,
-        LoginLog.login_time <= end_time
+        LoginLog.login_time <= end_time,
+        LoginLog.deleted_at.is_(None),
     ).distinct().all()
 
     device_count = len(rows)
@@ -173,7 +183,8 @@ def should_create_alert(
         Alert.username == username,
         Alert.alert_type == alert_type,
         Alert.status == "pending",
-        Alert.created_at >= since
+        Alert.created_at >= since,
+        Alert.deleted_at.is_(None),
     ).first()
 
     return existing is None

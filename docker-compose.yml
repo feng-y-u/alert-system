@@ -55,6 +55,10 @@ services:
       EMAIL_PORT: 465
       EMAIL_USER: your-email@example.com
       EMAIL_PASSWORD: change-me-to-a-smtp-password
+      # 本地编排默认 development：占位密钥只打印安全警告；
+      # 生产请改为 production 并替换 SECRET_KEY / API_KEY，否则启动期自检会拒绝启动
+      ENVIRONMENT: development
+      BUSINESS_TIMEZONE: Asia/Shanghai
     ports:
       - "8000:8000"
     volumes:

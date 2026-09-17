@@ -52,7 +52,7 @@ def login():
                 "user_agent": request.headers.get("User-Agent", "Unknown"),
                 "login_status": "success",
             }, request.form.get("platform_url", "http://localhost:8000"),
-               request.form.get("api_key", "change-me-to-a-random-api-key-in-production"))
+               request.form.get("api_key", "dev-api-key-change-in-production"))
             return redirect(f"/welcome?username={username}")
         else:
             error = "用户名或密码错误"
@@ -61,9 +61,9 @@ def login():
                 "login_time": datetime.now(timezone.utc).isoformat(),
                 "ip_address": request.remote_addr or "127.0.0.1",
                 "user_agent": request.headers.get("User-Agent", "Unknown"),
-                "login_status": "failed",
+                "login_status": "failure",
             }, request.form.get("platform_url", "http://localhost:8000"),
-               request.form.get("api_key", "change-me-to-a-random-api-key-in-production"))
+               request.form.get("api_key", "dev-api-key-change-in-production"))
 
     return render_template("index.html", error=error)
 
@@ -103,7 +103,7 @@ def simulate():
                 "login_time": datetime.now(timezone.utc).isoformat(),
                 "ip_address": ip,
                 "user_agent": "Mozilla/5.0 (Windows NT 10.0)",
-                "login_status": "failed",
+                "login_status": "failure",
             }
             ok = report_log(data, platform_url, api_key)
             status = "✓" if ok else "✗"
@@ -122,7 +122,7 @@ def simulate():
                 "login_time": datetime.now(timezone.utc).isoformat(),
                 "ip_address": ip,
                 "user_agent": ua,
-                "login_status": "failed",
+                "login_status": "failure",
             }
             ok = report_log(data, platform_url, api_key)
             status = "✓" if ok else "✗"

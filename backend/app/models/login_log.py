@@ -23,5 +23,7 @@ class LoginLog(Base):
     user_agent = Column(String(500))
     login_status = Column(String(20), nullable=False)
     location = Column(String(100))
+    #: 软删除标记：销毁接口只打标记，不再物理删除（保护审计证据）
+    deleted_at = Column(DateTime)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

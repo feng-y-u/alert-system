@@ -3,8 +3,6 @@
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.core.security import create_access_token, get_password_hash
 from app.models.user import User
 from app.models.alert import Alert
@@ -98,12 +96,8 @@ class TestAuthIntegration:
 
 
 # ─── 日志集成测试 ───────────────────────────────────────────────
-
-
-@pytest.fixture(autouse=True)
-def _mock_celery_delay():
-    with patch("app.tasks.detection.detect_anomaly_for_log.delay", return_value=None):
-        yield
+# 说明：Celery 投递已由 tests/conftest.py 的全局 autouse fixture 统一屏蔽
+# （原模块级 _mock_celery_delay 已移除，见 docs/tech/14-评估与改进.md P0-4）。
 
 
 class TestLogsIntegration:

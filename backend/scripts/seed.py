@@ -29,6 +29,8 @@ def create_default_admin():
             hashed_password=get_password_hash("admin123"),
             role="admin",
             is_active=True,
+            # 初始口令是公开的示例值：首次登录后必须修改
+            must_change_password=True,
         )
         db.add(admin)
         db.commit()

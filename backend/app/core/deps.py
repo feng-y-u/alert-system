@@ -50,11 +50,17 @@ def get_current_user(
 def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """检查当前用户是否激活"""
+    """检查当前用户是否激活、是否需要强制修改初始密码"""
     if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="用户已被禁用",
+        )
+    if getattr(current_user, "must_change_password", False):
+        # 初始口令必须改掉之后才能使用其它接口（改密接口用 get_current_user 放行）
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="请先修改初始密码（POST /api/auth/change-password）",
         )
     return current_user
 
