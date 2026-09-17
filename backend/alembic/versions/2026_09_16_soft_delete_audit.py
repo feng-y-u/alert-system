@@ -1,8 +1,14 @@
 """软删除、审计日志与密码策略
 
-Revision ID: 2026_09_16_soft_delete_audit_password
+Revision ID: 2026_09_16_soft_delete_audit
 Revises: 2026_07_10_add_log_id_to_alerts
 Create Date: 2026-09-16 00:00:00.000000
+
+⚠️ revision id 必须 ≤ 32 字符：``alembic_version.version_num`` 是 ``VARCHAR(32)``。
+首版用的 ``2026_09_16_soft_delete_audit_password``（41 字符）在真实 MySQL 上
+DDL 全部执行成功、但版本号写入报 ``DataError (1406) Data too long``，留下
+「schema 已迁移、alembic 认为未迁移」的不一致状态（实测记录见
+``docs/tech/14-评估与改进.md`` §30.0）。
 
 对应 docs/tech/14-评估与改进.md：
 
@@ -19,7 +25,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = '2026_09_16_soft_delete_audit_password'
+revision: str = '2026_09_16_soft_delete_audit'
 down_revision: Union[str, None] = '2026_07_10_add_log_id_to_alerts'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
