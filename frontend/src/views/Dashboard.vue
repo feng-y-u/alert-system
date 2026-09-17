@@ -145,7 +145,8 @@ const statCards = computed(() => {
       value: pending,
       icon: Warning,
       tone: pending > 0 ? 'warning' : 'success',
-      hint: pending > 0 ? '需要管理员跟进' : '暂无待处理事项',
+      // 口径与告警列表的「待处理」筛选一致（status=pending 且未软删除）
+      hint: pending > 0 ? '与告警列表「待处理」筛选一致' : '暂无待处理事项',
     },
     {
       label: '活跃用户',

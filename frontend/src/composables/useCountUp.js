@@ -1,6 +1,7 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 
 import { easeOutQuint, prefersReducedMotion } from '../utils/motion'
+import { resolveNumericSource } from '../utils/number'
 
 const DEFAULT_MIN = 320
 const DEFAULT_MAX = 1100
@@ -18,7 +19,12 @@ const DEFAULT_MAX = 1100
  * - 系统开启「减少动态效果」时直接落到终值，不做任何过渡；
  * - 组件卸载 / 目标值再次变化时取消上一次动画，避免多条 rAF 并发。
  *
- * @param {() => number} source 目标值（getter，便于直接传 props.value）
+ * ⚠️ `source` 允许是 number / string / ref / computed / getter，
+ * 统一由 `resolveNumericSource` 解析。**不要**直接对它做 `Number()` 转换：
+ * `Number(computedRef)` 的结果是 NaN，会静默退化成 0
+ * （曾导致仪表盘「待处理告警」恒显示 0，见 docs/tech/14-评估与改进.md）。
+ *
+ * @param {number | string | import('vue').Ref | import('vue').ComputedRef | (() => number)} source
  * @param {{ minDuration?: number, maxDuration?: number, format?: (v: number) => string, immediate?: boolean }} options
  * @returns {{ display: import('vue').Ref<string>, isAnimating: import('vue').Ref<boolean> }}
  */
@@ -30,11 +36,7 @@ export function useCountUp(source, options = {}) {
     immediate = true,
   } = options
 
-  const readTarget = () => {
-    const raw = typeof source === 'function' ? source() : source
-    const num = typeof raw === 'number' ? raw : Number(raw)
-    return Number.isFinite(num) ? num : 0
-  }
+  const readTarget = () => resolveNumericSource(source)
 
   const display = ref(format(readTarget()))
   const isAnimating = ref(false)
