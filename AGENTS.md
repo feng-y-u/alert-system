@@ -70,7 +70,7 @@ SSE 用 query 传 token 不是设计瑕疵：浏览器 `EventSource` 无法附�
 1. 新模型必须在 `backend/app/models/__init__.py` 显式 import，否则 Alembic autogenerate 与 `Base.metadata` 漏表。当前已注册：`User`、`LoginLog`、`Alert`、`AuditLog`。
 2. 新路由文件需在 `backend/app/main.py` 手动 `import` 并 `app.include_router(..., prefix=settings.API_V1_PREFIX, tags=[...])` —— 没有自动扫描。
 3. Schema 的 `response_model` 类需 `model_config = ConfigDict(from_attributes=True)`，否则从 ORM 反序列化报错。
-4. 建表用 `alembic upgrade head`，不要用 `Base.metadata.create_all()`。`alembic/env.py` 会从 `settings.DATABASE_URL` 覆盖连接串，但 `alembic.ini` 仍保留了一份静态 `sqlalchemy.url` 作为回退。
+4. 建表用 `alembic upgrade head`，不要用 `Base.metadata.create_all()`。`alembic/env.py` 会从 `settings.DATABASE_URL` 覆盖连接串，但 `alembic.ini` 仍保留了一份静态 `sqlalchemy.url` 作为回退。**当前 head 是 `2026_09_18_alert_dedup_uq`**（告警去重唯一约束，见「易踩坑」）。
 5. 创建默认管理员：`cd backend && python scripts/seed.py`（账号 `admin` / `admin123`，并置 `must_change_password=True` —— 首次登录必须改密）。
 
 ## 枚举词汇表（已由 `core/vocab.py` + Pydantic `Literal` 收敛）
@@ -81,11 +81,26 @@ SSE 用 query 传 token 不是设计瑕疵：浏览器 `EventSource` 无法附�
 |---|---|
 | `Alert.alert_type` | `frequency`、`device` |
 | `Alert.severity` | `low`、`medium`、`high` |
-| `Alert.status` | `pending`、`acknowledged`、`resolved`；`AlertUpdate` 用 `Literal` 校验，从 resolved 回退会清空 `resolved_at` |
+| `Alert.status` | `pending`、`acknowledged`、`resolved`；`AlertUpdate` 用 `Literal` 校验取值，转换合法性另由 `api/alerts.py:ALLOWED_ALERT_TRANSITIONS` 约束（见下） |
 | `LoginLog.login_status` | **规范值 `success` / `failure`**（词表见 `core/vocab.py`）；入库即校验，`failed`/`fail` 自动归一化为 `failure` |
 | `User.role` | 默认 `admin` |
 
 告警去重视 `status`：`resolved` / `acknowledged` 不阻塞新告警，只有 `pending` 会。
+
+### 告警状态机（2026-09 修复后，勿回退）
+
+`api/alerts.py` 的 `ALLOWED_ALERT_TRANSITIONS` 限定转换：
+
+```
+pending       → acknowledged / resolved
+acknowledged  → pending / resolved
+resolved      → acknowledged            ← 闭环终态，不能一步打回 pending
+```
+
+- 非法转换返回 **409**（不是 422）；同状态重复提交是幂等 no-op，**不写审计日志**。
+- `resolved_at` 只在真正转为 `resolved` 时写入，**状态离开 `resolved` 时保留**。
+  旧实现的无条件清空会永久丢掉「这条告警何时被处理过」的审计事实，已修（BUG-005），
+  对应回归用例 `test_governance.py::test_resolved_at_is_preserved_when_status_moves_away`。
 
 ## 常用命令
 
@@ -128,7 +143,8 @@ docker-compose down
 - 测试在 `backend/tests/`，`conftest.py` 提供 `engine`、`client`、`db` 三个 fixture。
 - `engine` fixture 用**临时 SQLite**（自动创建 + 测试后清理），不依赖 Docker MySQL。
 - Celery `delay()` 通过 `mock.patch` 跳过，测试环境无 Redis；Redis pub/sub 同样 `patch("app.tasks.detection.redis.from_url")`。
-- 全部 **70** 个测试可离线运行（health 1 + security 2 + alert_stats 4 + detection 6 + integration 29 + contract 6 + config 8 + resilience 2 + governance 12）。Celery 投递由 `conftest.py` 的全局 autouse fixture 统一屏蔽，**无需 Redis**。
+- 全部 **116** 个测试可离线运行（health 1 + security 2 + alert_stats 4 + detection 11 + integration 29 + contract 6 + config 8 + resilience 2 + governance 14 + stats_consistency 4 + bug_fixes 35）。Celery 投递由 `conftest.py` 的全局 autouse fixture 统一屏蔽，**无需 Redis**。
+- `test_bug_fixes.py` 是源码级审查（BUG-001~010）的回归用例集，按 Bug 编号分组；改动 `logs_query` / `logs` / `alerts` / `detection` / `notification.js` 前先跑它。
 
 ```bash
 cd backend
@@ -168,6 +184,11 @@ pytest tests/test_integration.py::test_xxx -v       # 单用例
 - **`docker-compose up -d` 会拉起全部 6 个服务**，不只是 MySQL + Redis —— 会额外占用 8000 / 8882 端口。本地开发只需基础设施时用 `docker-compose up -d mysql redis`。
 - **销毁类端点需要显式确认**：`DELETE /api/logs?confirm=true`、`DELETE /api/alerts?scope=all|processed&confirm=true`。缺 `confirm=true` 返回 **409**；执行的是**软删除**（写 `deleted_at`，从所有查询/统计中消失但数据保留）并写入 `audit_logs`。清空接口因此不再触发外键冲突。
 - **`frontend/dist/` 已被 `.gitignore` 忽略，不在仓库里**（易误解为已提交产物）。前端 Docker 镜像在容器内从源码构建（`frontend/Dockerfile`：`COPY . .` → `npm run build`），与宿主机 `dist/` 无关。改前端后 8882 看不到改动时，重建镜像：`docker-compose up -d --build frontend`。
+- **未处理告警有数据库级唯一约束（2026-09 修复后，勿回退）**：`alerts` 表新增生成列 `pending_dedup_key`（`status='pending' AND deleted_at IS NULL` 时取 `username#alert_type`，其余为 `NULL`）+ 唯一索引 `uq_alerts_pending_dedup`。因此「同一 `(username, alert_type)` 只能有一条待处理告警」**由数据库保证**，不只靠 `should_create_alert` 的 SELECT —— 后者是 check-then-act，并发下两个检测任务都会查到「没有 pending 告警」并各插一条（已修，BUG-002）。
+  - **迁移必须跑**：`alembic upgrade head` 会先归并存量重复（保留最早一条，其余置为 `acknowledged`，不物理删除）再建列与索引；跳过迁移则建表缺列，接口直接报错。
+  - **写告警的代码要走 `services/detection.py:_create_alert_once()`**：它把 `IntegrityError` 视为「去重生效」（回滚后返回 `None`），而不是让异常冒泡。裸 `db.add(Alert(...)) + commit()` 在并发下会抛唯一约束冲突。
+  - 生成列表达式由 `app/models/alert.py:pending_dedup_expression()` 提供，用 SQLAlchemy `concat()` 而非 `text("CONCAT(...)")`：前者 MySQL 编译为 `concat(...)`、SQLite 编译为 `||`，单一定义同时适配生产库与测试库（测试用 SQLite 建表，见 `conftest.py`）。
+  - ⚠️ SQLite 的 `ALTER TABLE` 不支持新增 `STORED` 生成列，只有 `CREATE TABLE` 可以 —— 因此在 SQLite 上验证该迁移时需改用 `VIRTUAL`；MySQL 侧必须 `STORED`（否则不能建索引）。
 - **CORS 是 `allow_origins=["*"]` + `allow_credentials=True`**（`app/main.py`），仅适合开发，上线前需收敛。
 - **Celery 任务不再吞异常**：`detect_anomaly_for_log` / `run_anomaly_detection` 会 `logger.exception` 留痕并 `self.retry` 有限重试；定时检测的 Redis 游标**在处理成功后才推进**（失败时保留原游标，下一轮重新覆盖该窗口，避免永久漏检）。
 
