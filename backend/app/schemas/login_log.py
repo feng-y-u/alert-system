@@ -1,8 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.core.vocab import LOGIN_STATUS_ALIASES, LoginStatus
+
+#: login_time 允许的最大时钟超前量。
+#: 容忍上游主机时钟偏差，但拒绝任意未来时间 —— 实时检测以该条日志自己的
+#: login_time 为窗口终点，不加限制时上游可以提交未来时间干扰检测窗口。
+MAX_CLOCK_SKEW = timedelta(minutes=5)
 
 
 class LoginLogCreate(BaseModel):
@@ -12,6 +17,26 @@ class LoginLogCreate(BaseModel):
     user_agent: str | None = None
     login_status: str
     location: str | None = None
+
+    @field_validator("login_time")
+    @classmethod
+    def _normalize_login_time(cls, value: datetime) -> datetime:
+        """统一为 UTC naive 并拒绝明显超前的未来时间。
+
+        - 带 offset 的值先折算为 UTC naive：库内 ``login_time`` 是 UTC naive，
+          而 MySQL 对 aware datetime 会**静默剥离 tzinfo**（不报错但语义偏移）；
+        - 超前当前时间超过 ``MAX_CLOCK_SKEW`` 的值直接拒绝（见 BUG-008）。
+        """
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
+
+        now_utc_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        if value > now_utc_naive + MAX_CLOCK_SKEW:
+            raise ValueError(
+                "login_time 不得晚于当前时间（允许 "
+                f"{int(MAX_CLOCK_SKEW.total_seconds() // 60)} 分钟时钟偏差）"
+            )
+        return value
 
     @field_validator("login_status")
     @classmethod

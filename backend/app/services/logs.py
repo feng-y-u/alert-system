@@ -23,7 +23,10 @@ def build_log_query(
     query = db.query(LoginLog).filter(LoginLog.deleted_at.is_(None))
 
     if username:
-        query = query.filter(LoginLog.username.contains(username))
+        # autoescape=True：把用户输入里的 % 和 _ 当字面量。
+        # 否则搜索 "_" 会被当成单字符通配符、搜索 "%" 会匹配到全部记录
+        # （管理员以为在筛选，实际把全表都筛出来了，见 BUG-007）。
+        query = query.filter(LoginLog.username.contains(username, autoescape=True))
     if ip_address:
         query = query.filter(LoginLog.ip_address == ip_address)
     if login_status:

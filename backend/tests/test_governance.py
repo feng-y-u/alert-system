@@ -132,7 +132,12 @@ def test_soft_deleted_alert_is_not_detectable_as_duplicate(client, db):
     assert should_create_alert(db, "dedup_soft", "frequency") is True
 
 
-def test_resolved_at_is_cleared_when_status_moves_away(client, db):
+def test_resolved_at_is_preserved_when_status_moves_away(client, db):
+    """状态离开 resolved 时必须保留 resolved_at（BUG-005）。
+
+    原先从 resolved 回退会把 resolved_at 置空，等于永久丢掉
+    「这条告警何时被处理过」的审计事实，且一次误点即不可恢复。
+    """
     headers = _make_admin(db)
     alert = Alert(
         username="revert_user",
@@ -145,13 +150,76 @@ def test_resolved_at_is_cleared_when_status_moves_away(client, db):
     db.commit()
     db.refresh(alert)
 
-    client.put(f"/api/alerts/{alert.id}", json={"status": "resolved"}, headers=headers)
+    resolved_body = client.put(
+        f"/api/alerts/{alert.id}", json={"status": "resolved"}, headers=headers
+    ).json()
+    assert resolved_body["resolved_at"] is not None
+    resolved_at = resolved_body["resolved_at"]
+
     body = client.put(
         f"/api/alerts/{alert.id}", json={"status": "acknowledged"}, headers=headers
     ).json()
 
     assert body["status"] == "acknowledged"
-    assert body["resolved_at"] is None, "回退状态后 resolved_at 必须清空"
+    assert body["resolved_at"] == resolved_at, "回退状态后 resolved_at 必须保留"
+
+
+def test_illegal_status_transition_is_rejected(client, db):
+    """resolved 是闭环终态：不允许一步打回 pending，需先回到 acknowledged。"""
+    headers = _make_admin(db)
+    alert = Alert(
+        username="illegal_transition",
+        alert_type="frequency",
+        alert_message="m",
+        severity="medium",
+        status="resolved",
+        resolved_at=datetime.now(timezone.utc),
+    )
+    db.add(alert)
+    db.commit()
+    db.refresh(alert)
+
+    resp = client.put(
+        f"/api/alerts/{alert.id}", json={"status": "pending"}, headers=headers
+    )
+    assert resp.status_code == 409
+
+    # 经 acknowledged 中转是允许的
+    assert client.put(
+        f"/api/alerts/{alert.id}", json={"status": "acknowledged"}, headers=headers
+    ).status_code == 200
+    assert client.put(
+        f"/api/alerts/{alert.id}", json={"status": "pending"}, headers=headers
+    ).status_code == 200
+
+
+def test_same_status_update_is_idempotent(client, db):
+    """状态未变化时不重复写审计日志。"""
+    headers = _make_admin(db)
+    alert = Alert(
+        username="idempotent_user",
+        alert_type="frequency",
+        alert_message="m",
+        severity="low",
+        status="pending",
+    )
+    db.add(alert)
+    db.commit()
+    db.refresh(alert)
+
+    before = db.query(AuditLog).filter(
+        AuditLog.action == AUDIT_ALERT_STATUS_CHANGED
+    ).count()
+    resp = client.put(
+        f"/api/alerts/{alert.id}", json={"status": "pending"}, headers=headers
+    )
+    after = db.query(AuditLog).filter(
+        AuditLog.action == AUDIT_ALERT_STATUS_CHANGED
+    ).count()
+
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "pending"
+    assert after == before, "状态未变化不应新增审计记录"
 
 
 def test_alert_status_change_is_audited(client, db):

@@ -17,9 +17,9 @@ const notificationStore = useNotificationStore()
 
 function onReconnected() {
   resetOfflineFlag()
-  const token = localStorage.getItem('token')
-  if (token) {
-    notificationStore.fetchLatestAlertsOnReconnect(token)
+  if (localStorage.getItem('token')) {
+    // 补拉对同一批 pending 告警是幂等的（内部按 alert_id 去重）
+    notificationStore.fetchLatestAlertsOnReconnect()
   }
 }
 </script>

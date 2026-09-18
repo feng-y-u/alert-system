@@ -79,10 +79,20 @@ def generate_mock_data():
                         ))
 
         db.bulk_save_objects(logins)
-        db.bulk_save_objects(alerts)
+        # 同一 (username, alert_type) 只保留一条 pending 告警：数据库唯一索引
+        # uq_alerts_pending_dedup 保证该不变量（见 BUG-002），
+        # 不去重会让本脚本因唯一约束失败。
+        deduped_alerts: dict[tuple[str, str], Alert] = {}
+        for alert in alerts:
+            key = (alert.username, alert.alert_type)
+            existing = deduped_alerts.get(key)
+            if existing is None or alert.created_at < existing.created_at:
+                deduped_alerts[key] = alert
+        db.bulk_save_objects(list(deduped_alerts.values()))
         db.commit()
 
-        print(f"[OK] 生成 {len(logins)} 条登录日志, {len(alerts)} 条告警")
+        print(f"[OK] 生成 {len(logins)} 条登录日志, {len(deduped_alerts)} 条告警"
+              f"（原始 {len(alerts)} 条，按去重规则归并为每用户每类型 1 条）")
         print(f"     用户名: admin / admin123")
     except Exception as e:
         db.rollback()

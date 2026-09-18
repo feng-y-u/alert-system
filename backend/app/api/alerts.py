@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_active_user
 from app.core.vocab import (
+    ALERT_STATUS_ACKNOWLEDGED,
+    ALERT_STATUS_PENDING,
     ALERT_STATUS_RESOLVED,
     PROCESSED_ALERT_STATUSES,
     AlertSeverity,
@@ -87,6 +89,16 @@ def get_alert(
     return alert
 
 
+#: 允许的告警状态转换。
+#: ``resolved`` 视为闭环终态：重新打开必须先回到 ``acknowledged``，
+#: 避免管理员误点下拉菜单就把已处理告警一步打回待处理。
+ALLOWED_ALERT_TRANSITIONS = {
+    ALERT_STATUS_PENDING: {ALERT_STATUS_ACKNOWLEDGED, ALERT_STATUS_RESOLVED},
+    ALERT_STATUS_ACKNOWLEDGED: {ALERT_STATUS_PENDING, ALERT_STATUS_RESOLVED},
+    ALERT_STATUS_RESOLVED: {ALERT_STATUS_ACKNOWLEDGED},
+}
+
+
 @router.put("/alerts/{alert_id}", response_model=AlertResponse)
 def update_alert(
     alert_id: int,
@@ -97,7 +109,8 @@ def update_alert(
     """更新告警状态。
 
     - ``status`` 由 ``Literal`` 约束（P1-3），非法值返回 422；
-    - 从 ``resolved`` 回退到其它状态时会清空 ``resolved_at``，避免状态与时间自相矛盾；
+    - 非法状态转换返回 409，且**保留** ``resolved_at``：原先从 resolved 回退
+      会把它清空，等于永久丢掉「这条告警何时被处理过」的审计事实（BUG-005）；
     - 状态变更写入审计日志（P1-4）。
     """
     alert = _active_alerts(db).filter(Alert.id == alert_id).first()
@@ -105,23 +118,36 @@ def update_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     previous_status = alert.status
+    if update_data.status == previous_status:
+        return alert  # 幂等：状态未变则不写库、不写审计
+
+    allowed = ALLOWED_ALERT_TRANSITIONS.get(previous_status, set())
+    if update_data.status not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"不允许的状态转换：{previous_status} → {update_data.status}"
+                f"（{previous_status} 只能转为 {'/'.join(sorted(allowed)) or '无'}）"
+            ),
+        )
+
     alert.status = update_data.status
     if update_data.status == ALERT_STATUS_RESOLVED:
         alert.resolved_at = datetime.now(timezone.utc)
-    else:
+    elif previous_status != ALERT_STATUS_RESOLVED:
+        # 仅在「从未 resolved」时保持为空，避免抹掉历史处理时间
         alert.resolved_at = None
 
     db.commit()
     db.refresh(alert)
 
-    if previous_status != alert.status:
-        audit.record(
-            db,
-            audit.AUDIT_ALERT_STATUS_CHANGED,
-            actor=current_user,
-            target=f"alert:{alert.id}",
-            detail=f"{previous_status} → {alert.status}",
-        )
+    audit.record(
+        db,
+        audit.AUDIT_ALERT_STATUS_CHANGED,
+        actor=current_user,
+        target=f"alert:{alert.id}",
+        detail=f"{previous_status} → {alert.status}",
+    )
 
     return alert
 

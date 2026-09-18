@@ -152,8 +152,16 @@ async function handleStatusChange(alertId, status) {
     await updateAlertStatus(alertId, status)
     ElMessage.success('告警状态已更新')
     refresh()
-  } catch {
-    ElMessage.error('更新告警状态失败')
+  } catch (err) {
+    // 后端对非法状态转换返回 409 并给出具体原因（如「resolved 只能转为 acknowledged」），
+    // 直接展示它，避免只弹一句无信息量的「更新失败」
+    const detail = err?.response?.data?.detail
+    if (typeof detail === 'string') {
+      ElMessage.warning(detail)
+    } else {
+      ElMessage.error('更新告警状态失败')
+    }
+    refresh()
   }
 }
 
@@ -170,12 +178,20 @@ async function handleClear(scope) {
         confirmButtonClass: 'el-button--danger',
       },
     )
+  } catch {
+    // 用户取消：正常静默返回
+    return
+  }
+
+  try {
     const res = await clearAlerts(scope)
     ElMessage.success(`已清空 ${res.deleted} 条${label}告警`)
     skip.value = 0
     refresh()
   } catch {
-    // 用户取消或删除失败，均不处理
+    // 失败提示已由 api/index.js 的响应拦截器统一给出。
+    // 单独 try 块是为了不把「用户取消」和「清空失败」混在一起：
+    // 原先两者共用一个空 catch，清空失败时界面毫无反馈（BUG-010）。
   }
 }
 </script>

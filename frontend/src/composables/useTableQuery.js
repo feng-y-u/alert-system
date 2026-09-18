@@ -10,6 +10,13 @@ import { useAsyncData } from './useAsyncData'
  * @param {Function} fetcher 形如 ({ skip, limit, ...filters }) => Promise<{ items, total }>
  * @param {{ limit?: number }} options
  */
+/** 计算承载 ``total`` 条数据时最后一个非空页的 skip */
+function lastValidSkipFor(total, limit) {
+  if (total <= 0) return 0
+  const perPage = limit > 0 ? limit : 1
+  return Math.floor((total - 1) / perPage) * perPage
+}
+
 export function useTableQuery(fetcher, { limit: defaultLimit = 20 } = {}) {
   const items = ref([])
   const total = ref(0)
@@ -17,14 +24,33 @@ export function useTableQuery(fetcher, { limit: defaultLimit = 20 } = {}) {
   const limit = ref(defaultLimit)
   const filters = ref({})
 
-  async function load() {
-    const res = await fetcher({
-      skip: skip.value,
-      limit: limit.value,
+  function fetchPage(atSkip, atLimit) {
+    return fetcher({
+      skip: atSkip,
+      limit: atLimit,
       ...filters.value,
     })
+  }
+
+  async function load() {
+    const res = await fetchPage(skip.value, limit.value)
+    const newTotal = res?.total ?? 0
+
+    // 当前页已越界（写操作把数据改少、或末页被清空）：回退到最后一个有效页重新取数。
+    // 只置 skip 不重新请求的话，界面会停在一张空白表格上（BUG-009）。
+    const lastValid = lastValidSkipFor(newTotal, limit.value)
+    if (newTotal > 0 && skip.value > lastValid) {
+      skip.value = lastValid
+      const retry = await fetchPage(lastValid, limit.value)
+      items.value = retry?.items ?? []
+      total.value = retry?.total ?? 0
+      return
+    }
+
+    if (newTotal === 0) skip.value = 0
+
     items.value = res?.items ?? []
-    total.value = res?.total ?? 0
+    total.value = newTotal
   }
 
   const { loading, error, retryCooldown, execute } = useAsyncData(load)

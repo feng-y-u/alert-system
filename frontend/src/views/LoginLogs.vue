@@ -107,12 +107,20 @@ async function handleClear() {
         confirmButtonClass: 'el-button--danger',
       },
     )
+  } catch {
+    // 用户取消：正常静默返回
+    return
+  }
+
+  try {
     const res = await clearLogs()
     ElMessage.success(`已清空 ${res.deleted} 条日志`)
     skip.value = 0
     refresh()
   } catch {
-    // 用户取消或删除失败，均不处理
+    // 失败提示已由 api/index.js 的响应拦截器统一给出。
+    // 单独 try 块是为了不把「用户取消」和「清空失败」混在一起：
+    // 原先两者共用一个空 catch，清空失败时界面毫无反馈（BUG-010）。
   }
 }
 </script>

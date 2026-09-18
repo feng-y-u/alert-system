@@ -305,8 +305,11 @@ class TestStatsIntegration:
         user = _seed_admin(db)
         now = datetime.now(timezone.utc)
         for i in range(5):
+            # 每条用不同用户名：数据库唯一索引 uq_alerts_pending_dedup 保证
+            # 「同一 (username, alert_type) 只能有一条 pending 告警」，
+            # 同一个用户名建 5 条 pending 属于违反该不变量的数据（见 BUG-002）。
             alert = Alert(
-                username="statuser",
+                username=f"statuser{i}",
                 alert_type="frequency",
                 alert_message=f"Alert {i}",
                 severity="medium" if i % 2 == 0 else "high",
