@@ -25,8 +25,8 @@ POST /api/logs  (X-API-Key 鉴权)
             └─ tasks/detection.py
                  ├─ services/detection.py
                  │    ├─ detect_frequency_anomaly  5 分钟内同一用户 ≥10 次登录
-                 │    └─ detect_device_anomaly     1 小时内同一用户 ≥2 个 (user_agent + ip) 组合
-                 ├─ 严重级别：frequency 10~30 次 = medium，>30 = high；device 2 个 = medium，>2 = high
+                 │    └─ detect_device_anomaly     1 小时内同一用户 ≥3 个 (user_agent + ip) 组合
+                 ├─ 严重级别：frequency 10~30 次 = medium，>30 = high；device 3~4 个 = medium，≥5 个 = high
                  ├─ should_create_alert 去重：24h 内已有同 username + 同 alert_type 的 pending 告警则跳过
                  ├─ Alert 落库
                  ├─ send_alert_email.delay(alert.id)              邮件（未配置 SMTP 则跳过）
@@ -143,7 +143,7 @@ docker-compose down
 - 测试在 `backend/tests/`，`conftest.py` 提供 `engine`、`client`、`db` 三个 fixture。
 - `engine` fixture 用**临时 SQLite**（自动创建 + 测试后清理），不依赖 Docker MySQL。
 - Celery `delay()` 通过 `mock.patch` 跳过，测试环境无 Redis；Redis pub/sub 同样 `patch("app.tasks.detection.redis.from_url")`。
-- 全部 **116** 个测试可离线运行（health 1 + security 2 + alert_stats 4 + detection 11 + integration 29 + contract 6 + config 8 + resilience 2 + governance 14 + stats_consistency 4 + bug_fixes 35）。Celery 投递由 `conftest.py` 的全局 autouse fixture 统一屏蔽，**无需 Redis**。
+- 全部 **119** 个测试可离线运行（health 1 + security 2 + alert_stats 4 + detection 13 + integration 30 + contract 6 + config 8 + resilience 2 + governance 14 + stats_consistency 4 + bug_fixes 35）。Celery 投递由 `conftest.py` 的全局 autouse fixture 统一屏蔽，**无需 Redis**。
 - `test_bug_fixes.py` 是源码级审查（BUG-001~010）的回归用例集，按 Bug 编号分组；改动 `logs_query` / `logs` / `alerts` / `detection` / `notification.js` 前先跑它。
 
 ```bash

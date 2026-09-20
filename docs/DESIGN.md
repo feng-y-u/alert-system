@@ -83,9 +83,9 @@ severity(low/medium/high), status(pending/acknowledged/resolved), created_at, up
 - 严重级别：`medium`（10–30 次，提示"可能存在异常"）/ `high`（>30 次，提示"疑似暴力破解"）
 
 ### 设备异常（`device`）
-- 规则：同一用户 **1 小时内出现 ≥ 2 个不同设备** 即为异常
+- 规则：同一用户 **1 小时内出现 ≥ 3 个不同设备** 即为异常
   - "设备"按 `(user_agent, ip_address)` 组合去重统计
-- 严重级别：`medium`（2 个设备）/ `high`（>2 个设备，提示"疑似账号共享或被盗"）
+- 严重级别：`medium`（3–4 个设备）/ `high`（≥5 个设备，提示"疑似账号共享或被盗"）
 
 ### 两种检测模式
 按是否传入 `log_id` 区分（见 `detect_*_anomaly` 函数签名）：

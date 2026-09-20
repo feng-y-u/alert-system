@@ -192,8 +192,26 @@ class TestDetectionIntegration:
         alert = detect_device_anomaly(db, "traveler")
         assert alert is not None
         assert alert.alert_type == "device"
-        assert alert.severity == "high"
+        assert alert.severity == "medium"
         assert "3 个不同设备" in alert.alert_message
+
+    def test_device_detection_high_severity(self, client, db):
+        base_time = datetime.now(timezone.utc)
+        api_headers = {"X-API-Key": "dev-api-key-change-in-production"}
+
+        for i in range(5):
+            client.post("/api/logs", json={
+                "username": "shared_account",
+                "login_time": (base_time - timedelta(minutes=i * 5)).isoformat(),
+                "ip_address": f"10.0.0.{i + 1}",
+                "user_agent": f"Mozilla/5.0 (Device {i + 1})",
+                "login_status": "success",
+            }, headers=api_headers)
+
+        alert = detect_device_anomaly(db, "shared_account")
+        assert alert is not None
+        assert alert.severity == "high"
+        assert "5 个不同设备" in alert.alert_message
 
     def test_normal_behavior_no_alert(self, client, db):
         base_time = datetime.now(timezone.utc)

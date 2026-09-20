@@ -96,8 +96,36 @@ def test_detect_device_anomaly_single_device(db: Session):
     assert alert is None
 
 
+def test_detect_device_anomaly_two_devices_no_alert(db: Session):
+    """测试 2 个设备登录（低于检测起点，不触发告警）"""
+    base_time = datetime.now(timezone.utc)
+
+    # 设备1
+    log_data = LoginLogCreate(
+        username="testuser",
+        login_time=base_time - timedelta(minutes=20),
+        ip_address="192.168.1.1",
+        user_agent="Mozilla/5.0 (Windows NT 10.0)",
+        login_status="success"
+    )
+    create_log(db, log_data)
+
+    # 设备2
+    log_data = LoginLogCreate(
+        username="testuser",
+        login_time=base_time - timedelta(minutes=10),
+        ip_address="192.168.1.2",
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS)",
+        login_status="success"
+    )
+    create_log(db, log_data)
+
+    alert = detect_device_anomaly(db, "testuser")
+    assert alert is None
+
+
 def test_detect_device_anomaly_multiple_devices(db: Session):
-    """测试多设备登录（触发告警）"""
+    """测试 3 个设备登录（触发中级告警）"""
     base_time = datetime.now(timezone.utc)
 
     # 设备1
@@ -132,8 +160,28 @@ def test_detect_device_anomaly_multiple_devices(db: Session):
 
     alert = detect_device_anomaly(db, "testuser")
     assert alert is not None
-    assert alert.severity == "high"
+    assert alert.severity == "medium"
     assert "3 个不同设备" in alert.alert_message
+
+
+def test_detect_device_anomaly_high_severity(db: Session):
+    """测试 5 个设备登录（触发高级告警）"""
+    base_time = datetime.now(timezone.utc)
+
+    for i in range(5):
+        log_data = LoginLogCreate(
+            username="testuser",
+            login_time=base_time - timedelta(minutes=(5 - i) * 5),
+            ip_address=f"192.168.1.{i + 1}",
+            user_agent=f"Mozilla/5.0 (Device {i + 1})",
+            login_status="success"
+        )
+        create_log(db, log_data)
+
+    alert = detect_device_anomaly(db, "testuser")
+    assert alert is not None
+    assert alert.severity == "high"
+    assert "5 个不同设备" in alert.alert_message
 
 
 def test_should_create_alert_deduplication(db: Session):

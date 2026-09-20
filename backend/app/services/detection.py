@@ -157,14 +157,14 @@ def detect_device_anomaly(
 
     device_count = len(rows)
 
-    # 判断是否异常（2个及以上设备）
-    if device_count < 2:
+    # 判断是否异常（3个及以上设备）
+    if device_count < 3:
         return None
 
     # 确定严重级别
-    if device_count == 2:
+    if device_count < 5:
         severity = "medium"
-        message = f"用户 {username} 在1小时内使用2个不同设备登录"
+        message = f"用户 {username} 在1小时内使用 {device_count} 个不同设备登录"
     else:
         severity = "high"
         message = f"用户 {username} 在1小时内使用 {device_count} 个不同设备登录，疑似账号共享或被盗"
